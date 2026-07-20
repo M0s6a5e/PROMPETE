@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تأكيد الحساب — معمل البرومبت 🧪</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Changa:wght@400;600;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF3E3;
+    --bg-alt: #F5E6C8;
+    --ink: #201822;
+    --line: #201822;
+    --pink: #FF4FA3;
+    --video: #FF5A3C;
+    --image: #1E8F86;
+    --shadow-off: 5px 5px 0 var(--line);
+    --shadow-off-lg: 8px 8px 0 var(--line);
+    --font-display: 'Lalezar', 'Changa', sans-serif;
+    --font-body: 'Cairo', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #fff;
+    border: 3px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-off-lg);
+    max-width: 460px;
+    width: 100%;
+    padding: 40px 30px;
+    text-align: center;
+    position: relative;
+  }
+  .flask-icon {
+    font-size: 64px;
+    display: inline-block;
+    margin-bottom: 15px;
+    animation: float 2.5s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    margin: 0 0 10px;
+  }
+  p {
+    font-size: 15px;
+    color: #4A3F45;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+  .spinner {
+    width: 48px;
+    height: 48px;
+    margin: 20px auto;
+    border: 5px solid var(--bg-alt);
+    border-top-color: var(--video);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  .btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    border: 3px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 24px;
+    background: var(--video);
+    color: #fff;
+    box-shadow: var(--shadow-off);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 var(--line);
+  }
+  .btn-success { background: var(--image); }
+  .btn-error { background: var(--pink); }
+
+  .success-badge {
+    color: var(--image);
+    font-size: 72px;
+    margin-bottom: 10px;
+    animation: popIn .5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div id="statusIcon" class="flask-icon">🧪</div>
+  <h1 id="statusTitle">جاري التحقق من بريدك…</h1>
+  <p id="statusDesc">بنقوم بتأكيد حسابك في معمل البرومبت للتأكد من هويتك وتفعيل السحابة الخاصة بك.</p>
+  
+  <div id="loader" class="spinner"></div>
+  
+  <div id="actionContainer" style="display:none;">
+    <a href="index.html" id="actionBtn" class="btn">الذهاب للرئيسية</a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, applyActionCode } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { firebaseConfig } from './firebase-config.js';
+
+  // Extract oobCode from URL query parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const oobCode = urlParams.get('oobCode');
+  const mode = urlParams.get('mode');
+
+  const titleEl = document.getElementById('statusTitle');
+  const descEl = document.getElementById('statusDesc');
+  const iconEl = document.getElementById('statusIcon');
+  const loaderEl = document.getElementById('loader');
+  const actionContainer = document.getElementById('actionContainer');
+  const actionBtn = document.getElementById('actionBtn');
+
+  async function handleVerification() {
+    if (!oobCode || mode !== 'verifyEmail') {
+      showError('رابط تأكيد غير صالح', 'الرابط الذي استخدمته غير صحيح أو انتهت صلاحيته. يرجى طلب رابط جديد من حسابك.');
+      return;
+    }
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      
+      // Apply the verification action code
+      await applyActionCode(auth, oobCode);
+      
+      showSuccess();
+    } catch (err) {
+      console.error(err);
+      let errorDesc = 'فشل التحقق من البريد الإلكتروني. قد يكون الكود منتهي الصلاحية أو مستخدم بالفعل.';
+      if (err.code === 'auth/invalid-action-code') {
+        errorDesc = 'كود التأكيد هذا غير صالح أو تم استخدامه من قبل.';
+      }
+      showError('فشل تأكيد البريد', errorDesc);
+    }
+  }
+
+  function showSuccess() {
+    loaderEl.style.display = 'none';
+    iconEl.className = 'success-badge';
+    iconEl.textContent = '🎉';
+    titleEl.textContent = 'تم تأكيد حسابك بنجاح!';
+    titleEl.style.color = 'var(--image)';
+    descEl.textContent = 'تم تفعيل حسابك بالكامل. يمكنك الآن الدخول لمعمل البرومبت وإنشاء مشاريعك وحفظها.';
+    
+    actionBtn.textContent = '⚡ افتح معمل البرومبت';
+    actionBtn.className = 'btn btn-success';
+    actionBtn.href = 'index.html?verified=true';
+    actionContainer.style.display = 'block';
+    
+    // Auto redirect after 3 seconds
+    setTimeout(() => {
+      window.location.href = 'index.html?verified=true';
+    }, 3000);
+  }
+
+  function showError(title, desc) {
+    loaderEl.style.display = 'none';
+    iconEl.textContent = '❌';
+    iconEl.style.animation = 'none';
+    titleEl.textContent = title;
+    titleEl.style.color = 'var(--pink)';
+    descEl.textContent = desc;
+    
+    actionBtn.textContent = 'الذهاب للرئيسية';
+    actionBtn.className = 'btn btn-error';
+    actionBtn.href = 'index.html';
+    actionContainer.style.display = 'block';
+  }
+
+  // Execute verification on load
+  window.addEventListener('DOMContentLoaded', handleVerification);
+</script>
+
+</body>
+</html>
