@@ -638,8 +638,13 @@ document.getElementById('signupForm').addEventListener('submit', async e => {
     // Store display name in Auth
     await updateProfile(cred.user, { displayName: username });
     
-    // Send email verification
-    await sendEmailVerification(cred.user);
+    // Send email verification with dynamic action code redirect to verify-email.html
+    const cleanPath = window.location.pathname.replace('index.html', '').replace(/\/$/, '');
+    const redirectUrl = window.location.origin + cleanPath + '/verify-email.html';
+    await sendEmailVerification(cred.user, {
+      url: redirectUrl,
+      handleCodeInApp: true
+    });
     document.getElementById('verifyEmailDisplay').textContent = email;
     showAuthScreen('authVerifyScreen');
     showToast('تم إنشاء الحساب! تحقق من بريدك 📧', 'success');
@@ -655,7 +660,12 @@ document.getElementById('signupForm').addEventListener('submit', async e => {
 document.getElementById('resendVerifyBtn').addEventListener('click', async () => {
   if (!auth.currentUser) return;
   try {
-    await sendEmailVerification(auth.currentUser);
+    const cleanPath = window.location.pathname.replace('index.html', '').replace(/\/$/, '');
+    const redirectUrl = window.location.origin + cleanPath + '/verify-email.html';
+    await sendEmailVerification(auth.currentUser, {
+      url: redirectUrl,
+      handleCodeInApp: true
+    });
     showToast('تم إعادة إرسال رسالة التأكيد 📧', 'success');
   } catch { showToast('انتظر قليلاً قبل إعادة الإرسال', 'warning'); }
 });
