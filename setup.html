@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚙️ لوحة إعداد المدير — معمل البرومبت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Changa:wght@400;600;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF3E3; --bg-alt: #F5E6C8; --ink: #201822; --ink-soft: #4A3F45;
+    --line: #201822; --video: #FF5A3C; --image: #1E8F86; --music: #7B4FA0;
+    --website: #E8A400; --pink: #FF4FA3; --success: #22c55e; --danger: #ef4444;
+    --shadow: 5px 5px 0 var(--line); --shadow-sm: 3px 3px 0 var(--line);
+    --radius: 14px; --font-ui: 'Changa', 'Cairo', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  .header {
+    background: var(--ink); color: #fff; border-radius: var(--radius);
+    padding: 28px 32px; margin-bottom: 32px; box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-icon { font-size: 42px; }
+  .header-title { font-size: 26px; font-weight: 700; margin: 0; }
+  .header-sub { font-size: 14px; opacity: .7; margin: 4px 0 0; }
+
+  .card {
+    background: #fff; border: 3px solid var(--line); border-radius: var(--radius);
+    padding: 28px 28px 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm);
+  }
+  .card-title {
+    font-size: 18px; font-weight: 700; margin: 0 0 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .field-row { margin-bottom: 14px; }
+  label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--ink-soft); }
+  input, select {
+    width: 100%; padding: 10px 14px; border: 2px solid var(--line); border-radius: 8px;
+    font-family: var(--font-ui); font-size: 14px; background: var(--bg-alt);
+    direction: ltr; letter-spacing: .5px;
+  }
+  input:focus, select:focus { outline: 2px solid var(--pink); background: #fff; }
+
+  .model-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+
+  .btn {
+    font-family: var(--font-ui); font-weight: 700; font-size: 15px;
+    border: 3px solid var(--line); border-radius: 10px; padding: 12px 22px;
+    cursor: pointer; transition: transform .1s, box-shadow .1s;
+  }
+  .btn:hover { transform: translate(-2px,-2px); box-shadow: var(--shadow); }
+  .btn-primary { background: var(--ink); color: #fff; }
+  .btn-success { background: var(--image); color: #fff; }
+  .btn-danger  { background: var(--video); color: #fff; }
+  .btn-block   { width: 100%; }
+  .btn-lg      { font-size: 17px; padding: 14px 28px; }
+
+  .status-box {
+    padding: 14px 18px; border-radius: 10px; border: 2px solid;
+    font-size: 14px; font-weight: 600; margin-top: 14px; display: none;
+  }
+  .status-box.success { border-color: var(--success); background: #f0fdf4; color: #166534; }
+  .status-box.error   { border-color: var(--danger);  background: #fef2f2; color: #991b1b; }
+  .status-box.info    { border-color: var(--website); background: #fffbeb; color: #78350f; }
+
+  .current-config {
+    background: var(--ink); color: #a3e635; border-radius: 10px;
+    padding: 16px 18px; font-family: 'Courier New', monospace; font-size: 13px;
+    white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto;
+  }
+  .current-config:empty::after { content: '(لا توجد بيانات محفوظة حتى الآن)'; opacity: .5; }
+
+  .auth-gate {
+    background: #fff; border: 3px solid var(--line); border-radius: var(--radius);
+    padding: 40px 32px; text-align: center; box-shadow: var(--shadow);
+  }
+  .auth-gate-icon { font-size: 60px; margin-bottom: 12px; }
+  .auth-gate h2 { margin: 0 0 8px; }
+  .auth-gate p  { color: var(--ink-soft); margin: 0 0 20px; font-size: 14px; }
+
+  .spinner {
+    width: 22px; height: 22px; border: 3px solid rgba(255,255,255,.3);
+    border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite;
+    display: inline-block; vertical-align: middle; margin-left: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { border: none; border-top: 2px solid var(--bg-alt); margin: 20px 0; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+  .tag-free { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .tag-req  { background: #fef9c3; color: #713f12; border: 1px solid #fde047; }
+</style>
+</head>
+<body>
+
+<div class="page" id="mainPage">
+
+  <!-- ─── Header ─── -->
+  <div class="header">
+    <div class="header-icon">⚙️</div>
+    <div>
+      <h1 class="header-title">لوحة إعداد المدير</h1>
+      <p class="header-sub">معمل البرومبت — إعداد مفاتيح الذكاء الاصطناعي والموديلات في Firestore</p>
+    </div>
+  </div>
+
+  <!-- ─── Auth Gate (سيُخفى بعد تسجيل الدخول) ─── -->
+  <div class="auth-gate" id="authGate">
+    <div class="auth-gate-icon">🔐</div>
+    <h2>دخول المدير مطلوب</h2>
+    <p>هذه الصفحة متاحة فقط لأصحاب حساب المدير. سجّل الدخول بإيميل المدير للمتابعة.</p>
+    <div class="field-row" style="text-align:right;max-width:320px;margin:0 auto 12px;">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="adminEmail" placeholder="admin@example.com">
+    </div>
+    <div class="field-row" style="text-align:right;max-width:320px;margin:0 auto 16px;">
+      <label>كلمة المرور</label>
+      <input type="password" id="adminPassword" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary btn-lg" id="loginBtn" onclick="adminLogin()">🔓 دخول</button>
+    <div class="status-box" id="authStatus"></div>
+  </div>
+
+  <!-- ─── Setup Panel (مخفي حتى تسجيل الدخول) ─── -->
+  <div id="setupPanel" hidden>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div id="adminAvatar" style="width:38px;height:38px;background:var(--music);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px solid var(--line);">A</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;" id="adminName">مدير النظام</div>
+          <div style="font-size:12px;color:var(--ink-soft);" id="adminEmailDisplay">-</div>
+        </div>
+      </div>
+      <button class="btn btn-danger" onclick="adminLogout()">🚪 تسجيل الخروج</button>
+    </div>
+
+    <!-- ─── الإعداد الحالي ─── -->
+    <div class="card">
+      <h3 class="card-title">📦 الإعداد الحالي في Firestore</h3>
+      <div class="current-config" id="currentConfigDisplay"></div>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="loadCurrentConfig()">🔄 تحديث العرض</button>
+    </div>
+
+    <!-- ─── مفتاح OpenRouter ─── -->
+    <div class="card">
+      <h3 class="card-title">🔑 مفتاح OpenRouter API <span class="tag tag-req">إلزامي</span></h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 14px;">
+        احصل على مفتاحك من <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--music);">openrouter.ai/keys</a>
+        — يبدأ بـ <code style="background:var(--bg-alt);padding:1px 5px;border-radius:4px;">sk-or-v1-</code>
+      </p>
+      <div class="field-row">
+        <label>المفتاح (سيُحفظ في Firestore — لا يظهر في الكود)</label>
+        <input type="password" id="apiKeyInput" placeholder="sk-or-v1-xxxxxxxxxxxxxxxxxxxx">
+      </div>
+    </div>
+
+    <!-- ─── الموديلات ─── -->
+    <div class="card">
+      <h3 class="card-title">🤖 موديلات الذكاء الاصطناعي</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 16px;">
+        يمكنك تصفح الموديلات المتاحة من <a href="https://openrouter.ai/models" target="_blank" style="color:var(--music);">openrouter.ai/models</a>
+      </p>
+      <div class="model-grid">
+        <div class="field-row">
+          <label>🟢 الباقة المجانية (free)</label>
+          <input type="text" id="modelFree" value="google/gemma-4-26b-a4b-it:free" placeholder="موديل الباقة المجانية">
+        </div>
+        <div class="field-row">
+          <label>🔵 باقة برو (pro)</label>
+          <input type="text" id="modelPro" value="openai/gpt-oss-120b:free" placeholder="موديل باقة برو">
+        </div>
+        <div class="field-row">
+          <label>👑 باقة الملك (king)</label>
+          <input type="text" id="modelKing" value="openai/gpt-oss-120b:free" placeholder="موديل باقة الملك">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="model-grid">
+        <div class="field-row" style="grid-column: 1 / 3;">
+          <label>🖼️ موديل رؤية الصور (Vision) <span class="tag tag-free">للصور والملفات</span></label>
+          <input type="text" id="modelVision" value="nvidia/llama-nemotron-embed-vl-1b-v2:free" placeholder="موديل رؤية الصور">
+        </div>
+        <div class="field-row">
+          <label>🔄 موديل رؤية احتياطي (Fallback)</label>
+          <input type="text" id="modelVisionFallback" value="openai/gpt-oss-120b:free" placeholder="موديل احتياطي">
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── زر الحفظ ─── -->
+    <button class="btn btn-success btn-block btn-lg" id="saveBtn" onclick="saveConfig()">
+      💾 حفظ الإعدادات في Firestore الآن
+    </button>
+    <div class="status-box" id="saveStatus"></div>
+
+    <!-- ─── تعليمات Firestore Rules ─── -->
+    <div class="card" style="margin-top:24px;background:#FBF3E3;">
+      <h3 class="card-title">🛡️ قواعد الأمان المطلوبة (Firestore Rules)</h3>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px;">
+        تأكد أن قواعد Firestore الخاصة بمجموعة <code>config</code> تسمح بالقراءة فقط للمستخدمين المسجلين:
+      </p>
+      <pre style="background:var(--ink);color:#a3e635;padding:16px;border-radius:8px;font-size:12.5px;overflow-x:auto;">match /config/{docId} {
+  // القراءة: مسموح لأي مستخدم مسجّل
+  allow read: if request.auth != null;
+  // الكتابة: مقيّدة بالمدير فقط عبر صفحة الإعداد هذه
+  allow write: if request.auth.token.email == "<b>ADMIN_EMAIL_HERE</b>";
+}</pre>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp }                                    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getFirestore, doc, getDoc, setDoc }               from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  // ─── نفس إعدادات Firebase ───────────────────────────────
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCffrRr-wYBeiAf7GML6Xs3kQg-14mLFhQ",
+    authDomain:        "prompat-76c51.firebaseapp.com",
+    projectId:         "prompat-76c51",
+    storageBucket:     "prompat-76c51.firebasestorage.app",
+    messagingSenderId: "663109200073",
+    appId:             "1:663109200073:web:9da9a15649a88028b68518"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // ─── قائمة المديرين المسموح لهم ─────────────────────────
+  // أضف إيميلات المديرين هنا فقط — الكود لا يحتوي على مفاتيح AI
+  const ADMIN_EMAILS = [
+    "faregmostafe2@gmail.com",
+    // أضف إيميلات مديرين إضافيين هنا إذا لزم
+  ];
+
+  // ─── إخفاء/إظهار الواجهة بحسب حالة المصادقة ────────────
+  onAuthStateChanged(auth, user => {
+    if (user && ADMIN_EMAILS.includes(user.email)) {
+      document.getElementById('authGate').hidden  = true;
+      document.getElementById('setupPanel').hidden = false;
+      document.getElementById('adminName').textContent       = user.displayName || 'مدير النظام';
+      document.getElementById('adminEmailDisplay').textContent = user.email;
+      document.getElementById('adminAvatar').textContent    = (user.displayName || user.email)[0].toUpperCase();
+      loadCurrentConfig();
+    } else if (user) {
+      // مستخدم عادي — ليس مديراً
+      showStatus('authStatus', '⛔ هذا الحساب ليس له صلاحية وصول للوحة الإعداد.', 'error');
+      signOut(auth);
+    } else {
+      document.getElementById('authGate').hidden  = false;
+      document.getElementById('setupPanel').hidden = true;
+    }
+  });
+
+  // ─── تسجيل دخول المدير ──────────────────────────────────
+  window.adminLogin = async function() {
+    const email    = document.getElementById('adminEmail').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    const btn      = document.getElementById('loginBtn');
+
+    if (!email || !password) {
+      showStatus('authStatus', 'أدخل البريد الإلكتروني وكلمة المرور', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = 'جاري الدخول… <span class="spinner"></span>';
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      const msgs = {
+        'auth/user-not-found': 'البريد الإلكتروني غير موجود',
+        'auth/wrong-password': 'كلمة المرور غير صحيحة',
+        'auth/invalid-email':  'بريد إلكتروني غير صالح',
+        'auth/too-many-requests': 'محاولات كثيرة، حاول لاحقاً',
+      };
+      showStatus('authStatus', msgs[err.code] || 'فشل تسجيل الدخول: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔓 دخول';
+    }
+  };
+
+  // ─── تسجيل الخروج ────────────────────────────────────────
+  window.adminLogout = async function() {
+    await signOut(auth);
+  };
+
+  // ─── تحميل الإعداد الحالي من Firestore ──────────────────
+  window.loadCurrentConfig = async function() {
+    const display = document.getElementById('currentConfigDisplay');
+    display.textContent = '⏳ جاري التحميل…';
+    try {
+      const snap = await getDoc(doc(db, 'config', 'ai'));
+      if (snap.exists()) {
+        const data = snap.data();
+        // إخفاء المفتاح جزئياً في العرض للأمان
+        const masked = { ...data };
+        if (masked.openRouterApiKey) {
+          const k = masked.openRouterApiKey;
+          masked.openRouterApiKey = k.slice(0,12) + '***' + k.slice(-6);
+        }
+        display.textContent = JSON.stringify(masked, null, 2);
+
+        // تعبئة الحقول بالقيم الحالية (الموديلات فقط — المفتاح لا يُعاد)
+        if (data.models) {
+          document.getElementById('modelFree').value         = data.models.free  || '';
+          document.getElementById('modelPro').value          = data.models.pro   || '';
+          document.getElementById('modelKing').value         = data.models.king  || '';
+        }
+        if (data.visionModel)   document.getElementById('modelVision').value        = data.visionModel;
+        if (data.visionFallback) document.getElementById('modelVisionFallback').value = data.visionFallback;
+      } else {
+        display.textContent = '(لا توجد بيانات محفوظة بعد — أدخل الإعدادات وانقر حفظ)';
+      }
+    } catch (err) {
+      display.textContent = 'خطأ في التحميل: ' + err.message;
+    }
+  };
+
+  // ─── حفظ الإعداد في Firestore ───────────────────────────
+  window.saveConfig = async function() {
+    const apiKey      = document.getElementById('apiKeyInput').value.trim();
+    const modelFree   = document.getElementById('modelFree').value.trim();
+    const modelPro    = document.getElementById('modelPro').value.trim();
+    const modelKing   = document.getElementById('modelKing').value.trim();
+    const vision      = document.getElementById('modelVision').value.trim();
+    const visionFallback = document.getElementById('modelVisionFallback').value.trim();
+
+    if (!modelFree || !modelPro || !modelKing) {
+      showStatus('saveStatus', '⚠️ أسماء الموديلات مطلوبة (المجاني / برو / الملك)', 'error');
+      return;
+    }
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '⏳ جاري الحفظ… <span class="spinner"></span>';
+
+    try {
+      const configRef = doc(db, 'config', 'ai');
+
+      // إذا تم إدخال مفتاح جديد نحدّثه، وإلا نبقي على القيمة القديمة
+      const updateData = {
+        models: { free: modelFree, pro: modelPro, king: modelKing },
+        visionModel: vision,
+        visionFallback: visionFallback,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (apiKey) {
+        updateData.openRouterApiKey = apiKey;
+      }
+
+      await setDoc(configRef, updateData, { merge: true });
+
+      showStatus('saveStatus', '✅ تم حفظ الإعدادات في Firestore بنجاح! الموقع سيستخدمها فوراً.', 'success');
+      document.getElementById('apiKeyInput').value = ''; // امسح حقل المفتاح بعد الحفظ
+      await loadCurrentConfig();
+    } catch (err) {
+      showStatus('saveStatus', '❌ فشل الحفظ: ' + err.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 حفظ الإعدادات في Firestore الآن';
+    }
+  };
+
+  // ─── عرض رسائل الحالة ───────────────────────────────────
+  function showStatus(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `status-box ${type}`;
+    el.style.display = 'block';
+    if (type === 'success') setTimeout(() => el.style.display = 'none', 5000);
+  }
+
+  // ─── إرسال نموذج تسجيل الدخول بضغط Enter ───────────────
+  document.getElementById('adminPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.adminLogin();
+  });
+</script>
+</body>
+</html>
