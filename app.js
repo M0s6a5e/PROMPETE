@@ -19,7 +19,8 @@ import { ref, uploadBytes }                             from 'https://www.gstati
 // ─── Local Imports ─────────────────────────────────────────
 import { db, auth, storage,
          PLAN_LIMITS, PACKAGES,
-         PAYMENT_INFO, MODEL_DISPLAY }                  from './firebase-config.js';
+         PAYMENT_INFO, MODEL_DISPLAY,
+         AVAILABLE_MODELS, MODEL_TEXT, MODEL_VISION }   from './firebase-config.js';
 import { generatePromptPlan, fixSelectedText,
          verifyPaymentProof, fileToBase64 }             from './ai-service.js';
 
@@ -36,6 +37,7 @@ const state = {
   currentPlan:      null,
   projects:         [],
   cachedImageBase64: null,  // تخزين الصورة للاستخدام عند إعادة التوليد
+  customModel:      null,  // الموديل المختار من قبل المستخدم
 };
 
 const TYPE_LABELS = {
@@ -93,7 +95,13 @@ document.getElementById('burgerBtn').addEventListener('click', () => {
    MODALS
 ================================================================ */
 function openModal(id)  { document.getElementById(id).hidden = false; }
-function closeModal(id) { document.getElementById(id).hidden = true;  }
+async function closeModal(id) {
+  if (id === 'authOverlay' && auth.currentUser && !auth.currentUser.emailVerified) {
+    showToast('تم تسجيل الخروج لأن الحساب لم يتم تأكيده بعد.', 'warning');
+    try { await signOut(auth); } catch (e) {}
+  }
+  document.getElementById(id).hidden = true;
+}
 
 document.querySelectorAll('[data-close]').forEach(btn => {
   btn.addEventListener('click', () => closeModal(btn.dataset.close));
@@ -179,7 +187,11 @@ function renderWorkspaceSide() {
 
   // Model name
   const modelEl = document.getElementById('wsModelName');
-  if (modelEl) modelEl.textContent = MODEL_DISPLAY[state.package] || MODEL_DISPLAY.free;
+  if (modelEl) {
+    const activeModelId = state.customModel || MODEL_TEXT;
+    const selectedLabel = AVAILABLE_MODELS.find(m => m.id === activeModelId)?.label || activeModelId;
+    modelEl.textContent = selectedLabel;
+  }
 
   // File upload badge
   const badge = document.getElementById('wsFileProBadge');
@@ -426,6 +438,7 @@ document.getElementById('fixPopoverBtn').addEventListener('click', async () => {
       fullBlockText: fullText,
       type:          state.selectedType,
       planModel:     state.package,
+      customModel:   state.customModel,
     });
     // Replace selected text in the block
     const sel = window.getSelection();
@@ -447,9 +460,24 @@ document.getElementById('fixPopoverBtn').addEventListener('click', async () => {
 ================================================================ */
 onAuthStateChanged(auth, async user => {
   if (user) {
-    state.user = user;
-    await loadUserDoc(user);
-    updateNavForLoggedIn(user);
+    if (!user.emailVerified) {
+      state.user = null;
+      state.userDoc = null;
+      state.package = 'free';
+      state.projectsUsed  = 0;
+      state.storageUsedMB = 0;
+      state.projects = [];
+      updateNavForLoggedOut();
+      
+      const emailDisp = document.getElementById('verifyEmailDisplay');
+      if (emailDisp) emailDisp.textContent = user.email;
+      showAuthScreen('authVerifyScreen');
+      openModal('authOverlay');
+    } else {
+      state.user = user;
+      await loadUserDoc(user);
+      updateNavForLoggedIn(user);
+    }
   } else {
     state.user    = null;
     state.userDoc = null;
@@ -461,6 +489,7 @@ onAuthStateChanged(auth, async user => {
   }
   renderPricingHome();
   renderWorkspaceSide();
+  populateModelSelect();
 });
 
 async function loadUserDoc(user) {
@@ -596,7 +625,15 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   btn.disabled   = true;
   btn.textContent = '⏳ جاري الدخول…';
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    if (!cred.user.emailVerified) {
+      showAuthError('loginError', 'يرجى تأكيد بريدك الإلكتروني أولاً.');
+      const emailDisp = document.getElementById('verifyEmailDisplay');
+      if (emailDisp) emailDisp.textContent = cred.user.email;
+      showAuthScreen('authVerifyScreen');
+      await signOut(auth);
+      return;
+    }
     closeModal('authOverlay');
     showToast('أهلاً بك! 👋', 'success');
     showView('workspace');
@@ -711,7 +748,12 @@ document.getElementById('resetForm').addEventListener('submit', async e => {
 document.getElementById('googleBtn').addEventListener('click', async () => {
   const provider = new GoogleAuthProvider();
   try {
-    await signInWithPopup(auth, provider);
+    const cred = await signInWithPopup(auth, provider);
+    if (!cred.user.emailVerified) {
+      showToast('بريدك الإلكتروني التابع لحساب Google غير مؤكد.', 'warning');
+      await signOut(auth);
+      return;
+    }
     closeModal('authOverlay');
     showToast('أهلاً! تم الدخول بـ Google ✅', 'success');
     showView('workspace');
@@ -726,7 +768,12 @@ document.getElementById('googleBtn').addEventListener('click', async () => {
 document.getElementById('githubBtn').addEventListener('click', async () => {
   const provider = new GithubAuthProvider();
   try {
-    await signInWithPopup(auth, provider);
+    const cred = await signInWithPopup(auth, provider);
+    if (!cred.user.emailVerified) {
+      showToast('بريدك الإلكتروني التابع لحساب GitHub غير مؤكد.', 'warning');
+      await signOut(auth);
+      return;
+    }
     closeModal('authOverlay');
     showToast('أهلاً! تم الدخول بـ GitHub ✅', 'success');
     showView('workspace');
@@ -1221,6 +1268,7 @@ async function executePromptGeneration(descriptionText, isClarification = false)
       description: descriptionText,
       imageBase64,
       planModel:   state.package,
+      customModel: state.customModel,
     });
 
     if (plan.needsMoreDetails) {
@@ -1330,4 +1378,27 @@ document.getElementById('submitClarificationBtn').addEventListener('click', asyn
   await executePromptGeneration(combinedDescription, true);
 });
 
+// ─── Model Select Population ──────────────────────────────
+function populateModelSelect() {
+  const select = document.getElementById('wsModelSelect');
+  if (!select) return;
+  
+  select.innerHTML = AVAILABLE_MODELS.map(m => `
+    <option value="${m.id}" ${state.customModel === m.id ? 'selected' : ''}>${m.label}</option>
+  `).join('');
+  
+  if (!state.customModel && AVAILABLE_MODELS.length > 0) {
+    state.customModel = AVAILABLE_MODELS[0].id;
+  }
+}
+
+document.getElementById('wsModelSelect')?.addEventListener('change', (e) => {
+  state.customModel = e.target.value;
+  const selectedLabel = AVAILABLE_MODELS.find(m => m.id === state.customModel)?.label || state.customModel;
+  const modelEl = document.getElementById('wsModelName');
+  if (modelEl) modelEl.textContent = selectedLabel;
+  showToast(`تم تغيير الموديل النشط إلى: ${selectedLabel}`, 'info');
+});
+
+populateModelSelect();
 showView('home');

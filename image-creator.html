@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منشئ بطاقات الصور والآيات 🕌 — معمل البرومبت</title>
+<meta name="description" content="صمم بطاقات إسلامية وحكم مخصصة بالذكاء الاصطناعي وخلفيات SVG وتصديرها فوراً.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- تحميل خطوط عربية مميزة -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;700&family=Lalezar&family=Changa:wght@400;600;700&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FBF3E3;
+    --bg-alt: #F5E6C8;
+    --ink: #201822;
+    --ink-soft: #4A3F45;
+    --line: #201822;
+    --pink: #FF4FA3;
+    --video: #FF5A3C;
+    --image: #1E8F86;
+    --music: #7B4FA0;
+    --website: #E8A400;
+    
+    --shadow-off: 5px 5px 0 var(--line);
+    --shadow-off-lg: 8px 8px 0 var(--line);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font-display: 'Lalezar', 'Changa', sans-serif;
+    --font-body: 'Cairo', sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg);
+    border-bottom: 3px solid var(--line);
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  .logo-flask { font-size: 26px; }
+  .logo-text { font-family: var(--font-display); font-size: 24px; }
+
+  .btn {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 14px;
+    border: 3px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 16px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--line);
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--line); }
+  .btn:active { transform: translate(0, 0); box-shadow: 1px 1px 0 var(--line); }
+  .btn-primary { background: var(--video); color: #fff; }
+  .btn-outline { background: #fff; }
+  .btn-block { width: 100%; justify-content: center; }
+
+  /* Layout Container */
+  .creator-container {
+    max-width: 1200px;
+    margin: 30px auto 80px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 36px;
+  }
+
+  /* Live Preview Column */
+  .preview-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 100px;
+  }
+  .preview-card-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 4px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-off-lg);
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Canvas preview element */
+  .canvas-preview {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    user-select: none;
+    overflow: hidden;
+  }
+
+  .canvas-background-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .canvas-background-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    display: none;
+  }
+
+  /* Decorative frame/border overlay */
+  .canvas-frame {
+    position: absolute;
+    inset: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    z-index: 2;
+    transition: all 0.3s;
+  }
+
+  /* ─── Frame Styles ────────────────────────────── */
+  /* Frame: none */
+  .canvas-frame.frame-none { border: none; border-radius: 0; box-shadow: none; }
+
+  /* Frame: simple line */
+  .canvas-frame.frame-simple {
+    border-style: solid;
+    border-width: var(--frame-w, 3px);
+    border-color: var(--frame-c, rgba(255,255,255,0.7));
+    border-radius: 0;
+  }
+
+  /* Frame: rounded */
+  .canvas-frame.frame-rounded {
+    border-style: solid;
+    border-width: var(--frame-w, 3px);
+    border-color: var(--frame-c, rgba(255,255,255,0.7));
+    border-radius: 24px;
+  }
+
+  /* Frame: double line */
+  .canvas-frame.frame-double {
+    border: none;
+    outline: var(--frame-w, 3px) solid var(--frame-c, rgba(255,255,255,0.7));
+    outline-offset: calc(var(--frame-w, 3px) * -1 - 6px);
+    box-shadow: inset 0 0 0 calc(var(--frame-w, 3px) * 2 + 6px) var(--frame-c, rgba(255,255,255,0.7));
+  }
+
+  /* Frame: golden ornate (corners) */
+  .canvas-frame.frame-corners {
+    border: none;
+    background: none;
+  }
+  .canvas-frame.frame-corners::before,
+  .canvas-frame.frame-corners::after {
+    content: '';
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-color: var(--frame-c, #E8A400);
+    border-style: solid;
+    border-width: 0;
+  }
+  .canvas-frame.frame-corners::before {
+    top: 0; right: 0;
+    border-top-width: var(--frame-w, 4px);
+    border-right-width: var(--frame-w, 4px);
+  }
+  .canvas-frame.frame-corners::after {
+    bottom: 0; left: 0;
+    border-bottom-width: var(--frame-w, 4px);
+    border-left-width: var(--frame-w, 4px);
+  }
+  /* Extra corners via inner elements */
+  .corner-tl, .corner-br {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-color: var(--frame-c, #E8A400);
+    border-style: solid;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .corner-tl { top: 20px; left: 20px; border-width: var(--frame-w, 4px) 0 0 var(--frame-w, 4px); }
+  .corner-br { bottom: 20px; right: 20px; border-width: 0 var(--frame-w, 4px) var(--frame-w, 4px) 0; }
+
+  /* Frame: islamic arch SVG */
+  .canvas-frame.frame-islamic {
+    border-style: solid;
+    border-width: var(--frame-w, 4px);
+    border-color: var(--frame-c, #E8A400);
+    border-radius: 8px;
+    box-shadow:
+      inset 0 0 0 6px rgba(0,0,0,0.15),
+      0 0 20px rgba(232, 164, 0, 0.25);
+  }
+
+  /* Frame: glow neon */
+  .canvas-frame.frame-glow {
+    border: none;
+    box-shadow:
+      0 0 0 var(--frame-w, 3px) var(--frame-c, rgba(124, 77, 255, 0.8)),
+      0 0 30px var(--frame-c, rgba(124, 77, 255, 0.5)),
+      inset 0 0 20px var(--frame-c, rgba(124, 77, 255, 0.1));
+  }
+
+  /* Frame: dashed */
+  .canvas-frame.frame-dashed {
+    border-style: dashed;
+    border-width: var(--frame-w, 3px);
+    border-color: var(--frame-c, rgba(255,255,255,0.7));
+    border-radius: 0;
+  }
+
+  /* Frame: film strip */
+  .canvas-frame.frame-film {
+    border: none;
+    box-shadow:
+      inset 0 0 0 var(--frame-w, 12px) var(--frame-c, rgba(0,0,0,0.85));
+  }
+
+  /* ─── Frame Picker UI ─────────────────────────── */
+  .frame-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .frame-pick-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: #F0EAD6;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: var(--font-body);
+    color: var(--ink);
+    transition: all 0.15s;
+    padding: 6px 4px;
+  }
+  .frame-pick-btn svg { pointer-events: none; }
+  .frame-pick-btn:hover { transform: translateY(-2px); box-shadow: 3px 3px 0 var(--line); }
+  .frame-pick-btn.active {
+    background: var(--image);
+    color: #fff;
+    border-color: var(--line);
+    box-shadow: 3px 3px 0 var(--line);
+  }
+
+  .frame-controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: end;
+  }
+  .frame-color-preset {
+    height: 28px;
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .frame-color-preset:hover {
+    transform: translateY(-1px);
+    box-shadow: 2px 2px 0 var(--line);
+  }
+
+  .canvas-glass-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(32, 24, 34, 0.15);
+    backdrop-filter: blur(2px);
+    z-index: 2;
+  }
+
+  .canvas-content-box {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 90%;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  }
+
+  .canvas-text {
+    font-size: 24px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    direction: rtl;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .canvas-source {
+    font-size: 16px;
+    opacity: 0.85;
+    font-weight: 600;
+  }
+
+  /* Control Panel Column */
+  .control-col {
+    background: #fff;
+    border: 3px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-off);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 3px solid var(--line);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 10px 4px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-bottom: 4px solid transparent;
+    transition: all 0.12s;
+  }
+  .tab-btn.is-active {
+    color: var(--video);
+    border-bottom-color: var(--video);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.is-active { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Fields */
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field-label {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .field-input, .field-textarea, .field-select {
+    border: 3px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14.5px;
+    background: #fff;
+    width: 100%;
+    font-family: var(--font-body);
+  }
+  .field-input:focus, .field-textarea:focus, .field-select:focus {
+    border-color: var(--video);
+    outline: none;
+  }
+  
+  .row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* Preset Colors & Backgrounds */
+  .presets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .preset-color-btn {
+    height: 36px;
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .bg-templates-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .bg-template-item {
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg);
+    transition: all 0.15s;
+  }
+  .bg-template-item.active {
+    background: var(--image);
+    color: #fff;
+    border-color: var(--line);
+  }
+
+  /* Export Button Group */
+  .export-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 24px;
+    border-top: 3px solid var(--line);
+    background: var(--bg-alt);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ===================== RESPONSIVE ===================== */
+
+  /* Tablet: ≤ 900px */
+  @media (max-width: 900px) {
+    .creator-container {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin: 20px auto 60px;
+    }
+    .preview-col {
+      position: static;
+      top: auto;
+    }
+    .preview-card-wrapper {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .control-col {
+      padding: 18px;
+    }
+  }
+
+  /* Mobile: ≤ 600px */
+  @media (max-width: 600px) {
+    .header {
+      padding: 10px 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .logo-text { font-size: 20px; }
+    .logo-flask { font-size: 22px; }
+    .btn { font-size: 12px; padding: 6px 12px; }
+
+    .creator-container {
+      padding: 0 12px;
+      gap: 16px;
+      margin: 14px auto 40px;
+    }
+
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 0;
+      border-bottom: 2px solid var(--line);
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 0 0 auto;
+      font-size: 12.5px;
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+
+    .control-col {
+      padding: 14px;
+      gap: 14px;
+      border-radius: var(--radius-sm);
+    }
+    .panel-title { font-size: 20px; }
+
+    .row-grid { grid-template-columns: 1fr; }
+
+    .bg-templates-list { grid-template-columns: repeat(2, 1fr); }
+    .presets-grid { grid-template-columns: repeat(4, 1fr); }
+
+    .preview-card-wrapper {
+      max-width: 100%;
+      border-width: 3px;
+    }
+
+    .ai-img-gen-section { padding: 12px; }
+
+    .export-group .btn {
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+  }
+
+  /* Very small: ≤ 380px */
+  @media (max-width: 380px) {
+    .creator-container { padding: 0 8px; }
+    .tab-btn { font-size: 11.5px; padding: 9px 10px; }
+    .canvas-text { font-size: 20px !important; }
+    .canvas-source { font-size: 13px !important; }
+  }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--ink);
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 3px solid var(--line);
+    box-shadow: var(--shadow-off-sm);
+    animation: toastIn .3s ease forwards;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* AI Image Generation Loading */
+  .ai-img-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(32, 24, 34, 0.75);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    color: #fff;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 16px;
+    gap: 16px;
+    border-radius: var(--radius);
+  }
+  .ai-spinner {
+    width: 52px;
+    height: 52px;
+    border: 5px solid rgba(255,255,255,0.2);
+    border-top-color: #E8A400;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ai-img-gen-section {
+    background: linear-gradient(135deg, #1E3C40, #0A181C);
+    border: 2px solid #E8A400;
+    border-radius: 12px;
+    padding: 16px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ai-img-gen-section .field-label { color: #FFE082; }
+  .ai-img-gen-section .field-input,
+  .ai-img-gen-section .field-select,
+  .ai-img-gen-section .field-textarea {
+    background: #122830;
+    border-color: rgba(232, 164, 0, 0.4);
+    color: #fff;
+  }
+  .ai-img-gen-section select option {
+    background: #122830;
+    color: #fff;
+  }
+  .ai-img-gen-section .field-input::placeholder { color: rgba(255,255,255,0.5); }
+  .ai-img-gen-section .field-textarea::placeholder { color: rgba(255,255,255,0.5); }
+  .ai-img-gen-section .field-input:focus,
+  .ai-img-gen-section .field-select:focus,
+  .ai-img-gen-section .field-textarea:focus { border-color: #E8A400; outline: none; box-shadow: 0 0 0 2px rgba(232,164,0,0.2); }
+  .ai-img-badge {
+    background: #E8A400;
+    color: #201822;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  .ai-preview-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    display: none;
+    margin-top: 6px;
+  }
+
+  /* Hidden Helper Canvas */
+  #exportCanvas { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <a href="index.html" class="logo">
+    <span class="logo-flask">🧪</span>
+    <span class="logo-text">معمل البرومبت</span>
+  </a>
+  <a href="index.html" class="btn btn-outline">← العودة للرئيسية</a>
+</header>
+
+<main class="creator-container">
+  
+  <!-- Right: Live Preview -->
+  <section class="preview-col">
+    <h2 class="panel-title" style="margin-bottom: 0;">العرض المباشر للبطاقة</h2>
+    
+    <div class="preview-card-wrapper">
+      <div class="canvas-preview" id="cardPreview">
+        
+        <!-- SVG Dynamic Background Container -->
+        <div id="svgBgContainer" class="canvas-background-svg">
+          <!-- سيتم إدراج كود الـ SVG هنا -->
+        </div>
+
+        <!-- Custom Image Background -->
+        <img id="customBgImg" class="canvas-background-img" alt="خلفية مخصصة">
+
+        <!-- Glass overlay for readability -->
+        <div id="glassOverlay" class="canvas-glass-overlay"></div>
+
+        <!-- Frame border -->
+        <div id="cardFrame" class="canvas-frame"></div>
+
+        <!-- Content -->
+        <div class="canvas-content-box">
+          <div class="canvas-text" id="previewText">«إِنَّ مَعَ الْعُسْرِ يُسْرًا»</div>
+          <div class="canvas-source" id="previewSource">سورة الشرح - آية 6</div>
+        </div>
+
+      </div>
+    </div>
+    
+    <div style="font-size: 12px; color: var(--ink-soft); text-align: center;">
+      * يمكنك تعديل وتحريك النص أو تصغيره وتكبيره باستخدام الخيارات الجانبية.
+    </div>
+  </section>
+
+  <!-- Left: Control Panel -->
+  <section class="control-col">
+    <div>
+      <h2 class="panel-title">تصميم بطاقة ذكية</h2>
+      <p style="font-size: 13.5px; color: var(--ink-soft); margin: 0 0 16px;">
+        اختر آية، حديث، أو حكمة. دع الذكاء الاصطناعي يبحث عنها ويولد لك خلفية متناسقة، أو صممها يدوياً بالكامل.
+      </p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn is-active" data-tab="content">المحتوى</button>
+      <button class="tab-btn" data-tab="background">الخلفية</button>
+      <button class="tab-btn" data-tab="style">الخط والتنسيق</button>
+      <button class="tab-btn" data-tab="export">تنزيل وتصدير</button>
+    </div>
+
+    <!-- Tab 1: Content -->
+    <div class="tab-panel is-active" id="panel-content">
+      <div class="field-group">
+        <label class="field-label">نوع المحتوى</label>
+        <select id="contentType" class="field-select">
+          <option value="quran">آية قرآنية</option>
+          <option value="hadith">حديث نبوي شريف</option>
+          <option value="quote">مقولة مشهورة / حكمة</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">موضوع أو تصنيف النص (اختياري)</label>
+        <input type="text" id="themeInput" class="field-input" placeholder="مثال: الصبر، النجاح، الأمل، التفاؤل...">
+      </div>
+
+      <button class="btn btn-primary btn-block" id="generateContentBtn">
+        ✨ توليد النص بالذكاء الاصطناعي
+      </button>
+
+      <div style="border-top: 2px dashed var(--line); margin: 8px 0;"></div>
+
+      <div class="field-group">
+        <label class="field-label">النص المكتوب (يمكنك التعديل اليدوي)</label>
+        <textarea id="manualTextInput" class="field-textarea" rows="4" placeholder="اكتب النص هنا..."></textarea>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">المصدر / الكاتب</label>
+        <input type="text" id="manualSourceInput" class="field-input" placeholder="مثال: سورة البقرة آية 153">
+      </div>
+    </div>
+
+    <!-- Tab 2: Background -->
+    <div class="tab-panel" id="panel-background">
+      <div class="field-group">
+        <label class="field-label">نوع الخلفية</label>
+        <select id="bgType" class="field-select">
+          <option value="ai-image">🤖 توليد صورة بالذكاء الاصطناعي (مجاني)</option>
+          <option value="svg-presets">خلفيات SVG هندسية جاهزة</option>
+          <option value="upload">رفع صورة من جهازك</option>
+        </select>
+      </div>
+
+      <!-- Option C: AI Image Generation via Pollinations.ai (FREE) -->
+      <div id="aiImageSection" class="ai-img-gen-section field-group">
+        <span class="ai-img-badge">✨ مجاني 100% — Pollinations.ai</span>
+        <p style="margin: 0; font-size: 13px; opacity: 0.85;">
+          يولّد صوراً حقيقية بالذكاء الاصطناعي بناءً على وصفك دون أي دفع أو تسجيل.
+        </p>
+        <div class="field-group">
+          <label class="field-label">نمط الصورة المطلوبة</label>
+          <select id="aiImgStyle" class="field-select">
+            <option value="islamic">مسجد إسلامي / معمار عربي</option>
+            <option value="nature">طبيعة هادئة / شروق الشمس</option>
+            <option value="galaxy">سماء نجوم / كون / مجرّة</option>
+            <option value="abstract">تجريدي / ألوان متدرجة</option>
+            <option value="calligraphy">خط عربي / زخرفة</option>
+            <option value="mountains">جبال / شلالات / طبيعة جبلية</option>
+            <option value="desert">صحراء / واحة / كثبان رملية</option>
+            <option value="ocean">محيط / بحر / غروب شمس على الماء</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">وصف إضافي (اختياري)</label>
+          <input type="text" id="aiImgPromptExtra" class="field-input" placeholder="مثال: ألوان ذهبية، ضباب خفيف، جو روحاني...">
+        </div>
+        <button class="btn btn-primary btn-block" id="generateAiImgBtn">
+          🎨 ولّد الصورة الآن
+        </button>
+        <img id="aiGeneratedThumb" class="ai-preview-thumb" alt="الصورة المولّدة">
+      </div>
+
+      <!-- Option A: SVG presets -->
+      <div id="svgPresetsSection" class="field-group">
+        <label class="field-label">اختر قالباً بصرياً</label>
+        <div class="bg-templates-list" id="bgTemplatesList">
+          <div class="bg-template-item active" data-template="islamic-star">زخرفة إسلامية</div>
+          <div class="bg-template-item" data-template="waves-gold">أمواج ذهبية</div>
+          <div class="bg-template-item" data-template="nebula-dark">سديم كوني</div>
+          <div class="bg-template-item" data-template="minimalist-sunset">غروب مبسط</div>
+          <div class="bg-template-item" data-template="lines-abstract">خيوط مجردة</div>
+          <div class="bg-template-item" data-template="gradient-mesh">شبكة تدرج ألوان</div>
+        </div>
+
+        <button class="btn btn-outline btn-block" id="generateSvgBtn" style="margin-top: 10px;">
+          🎨 توليد خلفية عشوائية بالذكاء الاصطناعي
+        </button>
+      </div>
+
+      <!-- Option B: Upload -->
+      <div id="uploadSection" class="field-group" style="display: none;">
+        <label class="field-label">ارفع صورة الخلفية</label>
+        <input type="file" id="bgImgFile" accept="image/*" class="field-input">
+        <p style="font-size: 12px; color: var(--ink-soft); margin: 4px 0 0;">
+          للحصول على أفضل جودة، ارفع صورة مربعة الأبعاد وبحجم مناسب.
+        </p>
+      </div>
+
+      <div style="border-top: 2px dashed var(--line); margin: 8px 0;"></div>
+
+      <div class="field-group">
+        <label class="field-label">نوع الإطار</label>
+        <div class="frame-picker-grid" id="framePickerGrid">
+
+          <button class="frame-pick-btn active" data-frame="none">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="4" y="4" width="24" height="24" fill="#ccc" rx="2"/>
+              <line x1="4" y1="4" x2="28" y2="28" stroke="#999" stroke-width="1.5"/>
+            </svg>
+            بلا إطار
+          </button>
+
+          <button class="frame-pick-btn" data-frame="simple">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="3" y="3" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" rx="0"/>
+            </svg>
+            خط مستقيم
+          </button>
+
+          <button class="frame-pick-btn" data-frame="rounded">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="3" y="3" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" rx="8"/>
+            </svg>
+            حواف دائرية
+          </button>
+
+          <button class="frame-pick-btn" data-frame="double">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="3" y="3" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" rx="0"/>
+              <rect x="7" y="7" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" rx="0"/>
+            </svg>
+            مزدوج
+          </button>
+
+          <button class="frame-pick-btn" data-frame="corners">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <polyline points="3,10 3,3 10,3" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <polyline points="22,3 29,3 29,10" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <polyline points="3,22 3,29 10,29" fill="none" stroke="currentColor" stroke-width="2.5"/>
+              <polyline points="22,29 29,29 29,22" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            </svg>
+            زوايا فقط
+          </button>
+
+          <button class="frame-pick-btn" data-frame="islamic">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="3" y="3" width="26" height="26" fill="none" stroke="#E8A400" stroke-width="2.5" rx="3"/>
+              <rect x="6" y="6" width="20" height="20" fill="none" stroke="#E8A400" stroke-width="1" rx="2"/>
+              <circle cx="16" cy="16" r="3" fill="none" stroke="#E8A400" stroke-width="1"/>
+            </svg>
+            إسلامي
+          </button>
+
+          <button class="frame-pick-btn" data-frame="glow">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="4" y="4" width="24" height="24" fill="none" stroke="#7C4DFF" stroke-width="2" rx="2" filter="url(#glow)"/>
+              <defs><filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+            </svg>
+            ضوء نيون
+          </button>
+
+          <button class="frame-pick-btn" data-frame="dashed">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect x="3" y="3" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 3" rx="0"/>
+            </svg>
+            متقطع
+          </button>
+
+        </div>
+      </div>
+
+      <div class="frame-controls-row">
+        <div class="field-group" style="margin:0">
+          <label class="field-label">لون الإطار</label>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="color" id="frameColorPicker" value="#FFFFFF" style="width:48px;height:40px;border:2px solid var(--line);border-radius:8px;cursor:pointer;padding:2px;">
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;flex:1">
+              <button class="frame-color-preset" style="background:#FFFFFF;" data-color="#FFFFFF" title="أبيض"></button>
+              <button class="frame-color-preset" style="background:#E8A400;" data-color="#E8A400" title="ذهبي"></button>
+              <button class="frame-color-preset" style="background:#1E8F86;" data-color="#1E8F86" title="فيروزي"></button>
+              <button class="frame-color-preset" style="background:#FF4FA3;" data-color="#FF4FA3" title="وردي"></button>
+              <button class="frame-color-preset" style="background:#000000;" data-color="#000000" title="أسود"></button>
+            </div>
+          </div>
+        </div>
+        <div class="field-group" style="margin:0">
+          <label class="field-label">سُمك الإطار</label>
+          <select id="frameThickness" class="field-select">
+            <option value="2px">رفيع جداً</option>
+            <option value="3px" selected>رفيع</option>
+            <option value="5px">متوسط</option>
+            <option value="8px">سميك</option>
+            <option value="12px">سميك جداً</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row-grid">
+        <div class="field-group">
+          <label class="field-label">شفافية غطاء القراءة</label>
+          <input type="range" id="glassOpacity" min="0" max="0.8" step="0.05" value="0.2" class="field-input">
+        </div>
+        <div class="field-group">
+          <label class="field-label">ضبابية الخلفية (Blur)</label>
+          <input type="range" id="blurAmount" min="0" max="15" step="1" value="0" class="field-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Font & Styles -->
+    <div class="tab-panel" id="panel-style">
+      <div class="field-group">
+        <label class="field-label">نوع الخط العربي</label>
+        <select id="fontFamilySelect" class="field-select">
+          <option value="'Cairo', sans-serif">خط القاهرة (Cairo)</option>
+          <option value="'Amiri', serif">خط الأميري الكلاسيكي (Amiri)</option>
+          <option value="'Reem Kufi', sans-serif">خط ريم الكوفي (Reem Kufi)</option>
+          <option value="'Lalezar', cursive">خط لاليزار (Lalezar)</option>
+          <option value="'Changa', sans-serif">خط شانغا (Changa)</option>
+          <option value="'Tajawal', sans-serif">خط التجوال (Tajawal)</option>
+        </select>
+      </div>
+
+      <div class="row-grid">
+        <div class="field-group">
+          <label class="field-label">حجم الخط الرئيسي</label>
+          <input type="range" id="fontSizeInput" min="16" max="64" step="1" value="28" class="field-input">
+        </div>
+        <div class="field-group">
+          <label class="field-label">حجم خط الكاتب</label>
+          <input type="range" id="sourceSizeInput" min="12" max="32" step="1" value="16" class="field-input">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">لون النص</label>
+        <input type="color" id="textColorInput" value="#FFFFFF" class="field-input" style="height: 48px; padding: 2px;">
+      </div>
+
+      <div class="presets-grid">
+        <button class="preset-color-btn" style="background: #FFFFFF;" data-color="#FFFFFF"></button>
+        <button class="preset-color-btn" style="background: #FFE082;" data-color="#FFE082"></button>
+        <button class="preset-color-btn" style="background: #B2DFDB;" data-color="#B2DFDB"></button>
+        <button class="preset-color-btn" style="background: #FFAB91;" data-color="#FFAB91"></button>
+      </div>
+
+      <div class="row-grid">
+        <div class="field-group">
+          <label class="field-label">المحاذاة</label>
+          <select id="textAlignSelect" class="field-select">
+            <option value="center">وسط</option>
+            <option value="right">يمين</option>
+            <option value="left">يسار</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">وزن الخط (سمك)</label>
+          <select id="fontWeightSelect" class="field-select">
+            <option value="normal">عادي</option>
+            <option value="bold">عريض</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Export -->
+    <div class="tab-panel" id="panel-export">
+      <p style="font-size: 14px; color: var(--ink-soft); margin: 0 0 10px;">
+        اختر الصيغة المناسبة لتنزيل الصورة بجودة عالية لمشاركتها مع أصدقائك أو على منصات التواصل الاجتماعي.
+      </p>
+
+      <div class="export-group">
+        <button class="btn btn-primary btn-block" id="downloadPngBtn">💾 تنزيل كصورة عالية الجودة PNG</button>
+        <button class="btn btn-outline btn-block" id="downloadJpgBtn">📷 تنزيل كصورة مضغوطة JPG</button>
+        <button class="btn btn-outline btn-block" id="downloadSvgBtn">📐 تنزيل بتنسيق المتجهات SVG</button>
+      </div>
+      
+      <p style="font-size: 11.5px; color: var(--ink-soft); text-align: center; margin-top: 10px;">
+        * تنزيل SVG يعطيك جودة لا نهائية صالحة للطباعة والتعديل في برامج التصميم.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <p>معمل البرومبت 🧪 — من فكرتك إلى تصاميم وصور جاهزة.</p>
+</footer>
+
+<!-- Toast notification helper -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- Hidden Canvas for Raster Exports -->
+<canvas id="exportCanvas"></canvas>
+
+<!-- Firebase SDK & Client logic -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { doc, getDoc, getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+  import { firebaseConfig } from './firebase-config.js';
+  import { generateIslamicContent } from './ai-service.js';
+
+  // State
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const localState = {
+    user: null,
+    package: 'free',
+    bgType: 'svg-presets',
+    activeTemplate: 'islamic-star',
+    imageUrl: null,
+    text: `«إِنَّ مَعَ الْعُسْرِ يُسْرًا»`,
+    source: `سورة الشرح - آية 6`,
+  };
+
+  // SVG background templates definitions
+  const SVG_TEMPLATES = {
+    'islamic-star': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <defs>
+        <radialGradient id="grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1E3C40" />
+          <stop offset="100%" stop-color="#0A181C" />
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grad)" />
+      <!-- Star geometric patterns -->
+      <g stroke="#E8A400" stroke-width="1" fill="none" opacity="0.25">
+        <circle cx="400" cy="400" r="300" />
+        <circle cx="400" cy="400" r="200" />
+        <polygon points="400,100 660,250 660,550 400,700 140,550 140,250" />
+        <polygon points="400,100 140,250 660,250 400,700 140,550 660,550" />
+        <polygon points="400,70 490,200 640,200 550,320 640,450 490,450 400,580 310,450 160,450 250,320 160,200 310,200" transform="rotate(15 400 400)" />
+        <polygon points="400,70 490,200 640,200 550,320 640,450 490,450 400,580 310,450 160,450 250,320 160,200 310,200" transform="rotate(45 400 400)" />
+      </g>
+      <!-- Middle glowing aura -->
+      <circle cx="400" cy="400" r="150" fill="#E8A400" opacity="0.08" filter="blur(40px)" />
+    </svg>`,
+
+    'waves-gold': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <defs>
+        <linearGradient id="wavegrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2D1B36" />
+          <stop offset="100%" stop-color="#140B1A" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#wavegrad)" />
+      <path d="M-100,500 C150,300 350,700 850,450 L850,900 L-100,900 Z" fill="#E8A400" opacity="0.12" />
+      <path d="M-100,550 C200,400 400,750 900,500 L900,900 L-100,900 Z" fill="#E8A400" opacity="0.08" />
+      <path d="M-100,450 C100,200 300,600 800,400 L800,900 L-100,900 Z" fill="#FF4FA3" opacity="0.06" />
+    </svg>`,
+
+    'nebula-dark': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <rect width="100%" height="100%" fill="#0D0914" />
+      <circle cx="250" cy="250" r="280" fill="#7B4FA0" opacity="0.35" filter="blur(80px)" />
+      <circle cx="580" cy="520" r="240" fill="#1E8F86" opacity="0.3" filter="blur(80px)" />
+      <circle cx="400" cy="400" r="180" fill="#FF4FA3" opacity="0.2" filter="blur(70px)" />
+      <!-- Subtle stars -->
+      <g fill="#FFF" opacity="0.3">
+        <circle cx="120" cy="180" r="1.5" /><circle cx="680" cy="120" r="2" />
+        <circle cx="230" cy="580" r="1.2" /><circle cx="590" cy="680" r="1.5" />
+        <circle cx="450" cy="220" r="2" /><circle cx="310" cy="380" r="1.2" />
+      </g>
+    </svg>`,
+
+    'minimalist-sunset': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <defs>
+        <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FF5A3C" />
+          <stop offset="60%" stop-color="#E8A400" />
+          <stop offset="100%" stop-color="#FBF3E3" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#sky)" />
+      <circle cx="400" cy="480" r="220" fill="#FFE4DB" opacity="0.25" />
+      <circle cx="400" cy="480" r="140" fill="#FFF" opacity="0.35" />
+      <path d="M0,500 L800,500 L800,800 L0,800 Z" fill="#201822" opacity="0.08" />
+    </svg>`,
+
+    'lines-abstract': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <rect width="100%" height="100%" fill="#18131B" />
+      <g stroke="#FF4FA3" stroke-width="1.5" fill="none" opacity="0.25">
+        <path d="M 0,200 Q 200,100 400,200 T 800,200" />
+        <path d="M 0,300 Q 200,200 400,300 T 800,300" stroke="#E8A400" />
+        <path d="M 0,400 Q 200,300 400,400 T 800,400" stroke="#1E8F86" />
+        <path d="M 0,500 Q 200,400 400,500 T 800,500" />
+        <path d="M 0,600 Q 200,500 400,600 T 800,600" stroke="#7B4FA0" stroke-width="3" />
+      </g>
+    </svg>`,
+
+    'gradient-mesh': `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <defs>
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1E8F86" />
+          <stop offset="100%" stop-color="#FF5A3C" />
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#g1)" />
+      <circle cx="100" cy="700" r="400" fill="#7B4FA0" opacity="0.45" filter="blur(60px)" />
+      <circle cx="700" cy="100" r="350" fill="#E8A400" opacity="0.4" filter="blur(60px)" />
+    </svg>`
+  };
+
+  // Toast Notification function
+  function showToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  // Listen to Auth State
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      localState.user = user;
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) {
+          localState.package = snap.data().package || 'free';
+        }
+      } catch (err) { console.warn(err); }
+    }
+  });
+
+  // Tab switching logic
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('is-active'));
+      panels.forEach(p => p.classList.remove('is-active'));
+
+      tab.classList.add('is-active');
+      const targetPanel = document.getElementById(`panel-${tab.dataset.tab}`);
+      if (targetPanel) targetPanel.classList.add('is-active');
+    });
+  });
+
+  // Render Initial template
+  const svgContainer = document.getElementById('svgBgContainer');
+  function applyBgTemplate(name) {
+    if (SVG_TEMPLATES[name]) {
+      svgContainer.innerHTML = SVG_TEMPLATES[name];
+    }
+  }
+  applyBgTemplate(localState.activeTemplate);
+
+  // Background template items listener
+  const templateItems = document.querySelectorAll('.bg-template-item');
+  templateItems.forEach(item => {
+    item.addEventListener('click', () => {
+      templateItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      localState.activeTemplate = item.dataset.template;
+      applyBgTemplate(localState.activeTemplate);
+      showToast('تم تطبيق قالب الخلفية بنجاح');
+    });
+  });
+
+  // Background Type selector
+  const bgTypeSelect = document.getElementById('bgType');
+  const svgPresetsSection = document.getElementById('svgPresetsSection');
+  const uploadSection = document.getElementById('uploadSection');
+  const customBgImg = document.getElementById('customBgImg');
+
+  bgTypeSelect.addEventListener('change', () => {
+    const val = bgTypeSelect.value;
+    localState.bgType = val;
+
+    const aiSection = document.getElementById('aiImageSection');
+
+    if (val === 'ai-image') {
+      aiSection.style.display = 'flex';
+      svgPresetsSection.style.display = 'none';
+      uploadSection.style.display = 'none';
+    } else if (val === 'svg-presets') {
+      aiSection.style.display = 'none';
+      svgPresetsSection.style.display = 'block';
+      uploadSection.style.display = 'none';
+      svgContainer.style.display = 'block';
+      customBgImg.style.display = 'none';
+    } else {
+      aiSection.style.display = 'none';
+      svgPresetsSection.style.display = 'none';
+      uploadSection.style.display = 'block';
+      svgContainer.style.display = 'none';
+      customBgImg.style.display = 'block';
+    }
+  });
+
+  // ─── Default: show AI image section (it's the first option) ─────────────
+  document.getElementById('aiImageSection').style.display = 'flex';
+  document.getElementById('svgPresetsSection').style.display = 'none';
+  localState.bgType = 'ai-image';
+
+  // Upload Background Image
+  const bgImgFile = document.getElementById('bgImgFile');
+  bgImgFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      customBgImg.src = url;
+      localState.imageUrl = url;
+      showToast('تم تحميل صورة الخلفية المخصصة');
+    }
+  });
+
+  // Text inputs & updates
+  const manualText = document.getElementById('manualTextInput');
+  const manualSource = document.getElementById('manualSourceInput');
+  const previewText = document.getElementById('previewText');
+  const previewSource = document.getElementById('previewSource');
+
+  // Set initial text values in controls
+  manualText.value = localState.text;
+  manualSource.value = localState.source;
+
+  manualText.addEventListener('input', () => {
+    localState.text = manualText.value;
+    previewText.textContent = localState.text;
+  });
+
+  manualSource.addEventListener('input', () => {
+    localState.source = manualSource.value;
+    previewSource.textContent = localState.source;
+  });
+
+  // Font family selector
+  const fontFamilySelect = document.getElementById('fontFamilySelect');
+  fontFamilySelect.addEventListener('change', () => {
+    previewText.style.fontFamily = fontFamilySelect.value;
+  });
+
+  // Font size sliders
+  const fontSizeInput = document.getElementById('fontSizeInput');
+  fontSizeInput.addEventListener('input', () => {
+    previewText.style.fontSize = `${fontSizeInput.value}px`;
+  });
+
+  const sourceSizeInput = document.getElementById('sourceSizeInput');
+  sourceSizeInput.addEventListener('input', () => {
+    previewSource.style.fontSize = `${sourceSizeInput.value}px`;
+  });
+
+  // Text color picker & presets
+  const textColorInput = document.getElementById('textColorInput');
+  function updateTextColor(color) {
+    previewText.style.color = color;
+    previewSource.style.color = color;
+    textColorInput.value = color;
+  }
+  textColorInput.addEventListener('input', () => {
+    updateTextColor(textColorInput.value);
+  });
+  document.querySelectorAll('.preset-color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateTextColor(btn.dataset.color);
+    });
+  });
+
+  // Alignment
+  const textAlignSelect = document.getElementById('textAlignSelect');
+  textAlignSelect.addEventListener('change', () => {
+    previewText.style.textAlign = textAlignSelect.value;
+    previewSource.style.textAlign = textAlignSelect.value;
+  });
+
+  // Font weight
+  const fontWeightSelect = document.getElementById('fontWeightSelect');
+  fontWeightSelect.addEventListener('change', () => {
+    previewText.style.fontWeight = fontWeightSelect.value;
+  });
+
+  // ─── Frame Picker System ────────────────────────────────────────────────
+  const cardFrame = document.getElementById('cardFrame');
+  let currentFrameColor = '#FFFFFF';
+  let currentFrameWidth = '3px';
+  let currentFrameStyle = 'none';
+
+  // Helper: manage corner decorators (for 'corners' frame)
+  function updateCornerDecorators() {
+    document.querySelectorAll('.corner-tl, .corner-br').forEach(el => el.remove());
+    if (currentFrameStyle === 'corners') {
+      const wrapper = document.querySelector('.preview-card-wrapper');
+      const tl = document.createElement('div');
+      tl.className = 'corner-tl';
+      tl.style.setProperty('--frame-c', currentFrameColor);
+      tl.style.setProperty('--frame-w', currentFrameWidth);
+      const br = document.createElement('div');
+      br.className = 'corner-br';
+      br.style.setProperty('--frame-c', currentFrameColor);
+      br.style.setProperty('--frame-w', currentFrameWidth);
+      wrapper.appendChild(tl);
+      wrapper.appendChild(br);
+    }
+  }
+
+  function applyFrame() {
+    cardFrame.className = 'canvas-frame frame-' + currentFrameStyle;
+    cardFrame.style.setProperty('--frame-c', currentFrameColor);
+    cardFrame.style.setProperty('--frame-w', currentFrameWidth);
+    updateCornerDecorators();
+  }
+
+  // Frame picker buttons
+  document.querySelectorAll('.frame-pick-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.frame-pick-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFrameStyle = btn.dataset.frame;
+      applyFrame();
+    });
+  });
+
+  // Frame color picker
+  const frameColorPicker = document.getElementById('frameColorPicker');
+  frameColorPicker.addEventListener('input', () => {
+    currentFrameColor = frameColorPicker.value;
+    applyFrame();
+  });
+
+  // Frame color presets
+  document.querySelectorAll('.frame-color-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFrameColor = btn.dataset.color;
+      frameColorPicker.value = currentFrameColor;
+      applyFrame();
+    });
+  });
+
+  // Frame thickness
+  const frameThickness = document.getElementById('frameThickness');
+  frameThickness.addEventListener('change', () => {
+    currentFrameWidth = frameThickness.value;
+    applyFrame();
+  });
+
+  // Apply default (none)
+  applyFrame();
+
+  const glassOpacity = document.getElementById('glassOpacity');
+  const glassOverlay = document.getElementById('glassOverlay');
+  glassOpacity.addEventListener('input', () => {
+    glassOverlay.style.backgroundColor = `rgba(32, 24, 34, ${glassOpacity.value})`;
+  });
+
+  const blurAmount = document.getElementById('blurAmount');
+  blurAmount.addEventListener('input', () => {
+    const blurVal = `${blurAmount.value}px`;
+    if (localState.bgType === 'svg-presets') {
+      svgContainer.style.filter = `blur(${blurVal})`;
+    } else {
+      customBgImg.style.filter = `blur(${blurVal})`;
+    }
+  });
+
+  // ─── Pollinations.ai AI Image Generation ──────────────────────────────
+  const AI_STYLE_PROMPTS = {
+    'islamic':     'Beautiful Islamic mosque architecture, intricate geometric patterns, golden arabesque, soft warm lighting, photorealistic, 8K quality, serene spiritual atmosphere',
+    'nature':      'Peaceful sunrise over mountains, golden hour light, misty valley, lush green landscape, cinematic photography, 8K, high detail',
+    'galaxy':      'Deep space nebula with colorful stars, milky way galaxy, cosmic dust, dark sky, ultra detailed astrophotography, 8K resolution',
+    'abstract':    'Abstract fluid art, vibrant color gradients, smooth flowing shapes, gold and teal tones, premium digital art, high resolution',
+    'calligraphy': 'Elegant Arabic calligraphy art, ornate Islamic geometric borders, gold ink on dark parchment, detailed, ultra sharp, premium artwork',
+    'mountains':   'Majestic snow-capped mountains, dramatic clouds, sunset golden light, epic landscape photography, 8K quality, cinematic',
+    'desert':      'Golden sand dunes at sunset, dramatic sky, lone palm tree, warm orange tones, cinematic desert photography, 8K',
+    'ocean':       'Calm ocean at sunset, golden reflection on water, soft waves, peaceful atmosphere, cinematic photography, 8K resolution',
+  };
+
+  const generateAiImgBtn = document.getElementById('generateAiImgBtn');
+  const aiImgStyle = document.getElementById('aiImgStyle');
+  const aiImgPromptExtra = document.getElementById('aiImgPromptExtra');
+  const aiGeneratedThumb = document.getElementById('aiGeneratedThumb');
+  const previewWrapper = document.querySelector('.preview-card-wrapper');
+
+  function buildPollinationsUrl(styleKey, extra) {
+    const basePrompt = AI_STYLE_PROMPTS[styleKey] || AI_STYLE_PROMPTS['abstract'];
+    const extraClean = extra ? `, ${extra}` : '';
+    const fullPrompt = encodeURIComponent(`${basePrompt}${extraClean}, no text, no watermark`);
+    const seed = Math.floor(Math.random() * 999999);
+    return `https://image.pollinations.ai/prompt/${fullPrompt}?width=800&height=800&seed=${seed}&nologo=true&enhance=true&model=flux`;
+  }
+
+  generateAiImgBtn.addEventListener('click', async () => {
+    const styleKey = aiImgStyle.value;
+    const extra = aiImgPromptExtra.value.trim();
+
+    // Show loading overlay on preview card
+    generateAiImgBtn.disabled = true;
+    generateAiImgBtn.textContent = '⏳ جاري توليد الصورة...';
+
+    let loadingOverlay = document.getElementById('aiImgLoadingOverlay');
+    if (!loadingOverlay) {
+      loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'aiImgLoadingOverlay';
+      loadingOverlay.className = 'ai-img-loading';
+      loadingOverlay.innerHTML = `<div class="ai-spinner"></div><span>⚡ الذكاء الاصطناعي يرسم صورتك...</span><span style="font-size:11px;opacity:0.7;">قد يستغرق 10-30 ثانية</span>`;
+      previewWrapper.appendChild(loadingOverlay);
+    } else {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    const imgUrl = buildPollinationsUrl(styleKey, extra);
+    showToast('⏳ جاري توليد الصورة الذكية، انتظر قليلاً...');
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      // Apply as background
+      customBgImg.src = img.src;
+      customBgImg.style.display = 'block';
+      svgContainer.style.display = 'none';
+      localState.imageUrl = img.src;
+      localState.bgType = 'ai-image';
+
+      // Show thumb in panel
+      aiGeneratedThumb.src = img.src;
+      aiGeneratedThumb.style.display = 'block';
+
+      // Remove loading overlay
+      loadingOverlay.style.display = 'none';
+      generateAiImgBtn.disabled = false;
+      generateAiImgBtn.textContent = '🎨 ولّد صورة جديدة';
+
+      showToast('✅ تم توليد الصورة بالذكاء الاصطناعي!');
+    };
+
+    img.onerror = () => {
+      loadingOverlay.style.display = 'none';
+      generateAiImgBtn.disabled = false;
+      generateAiImgBtn.textContent = '🎨 ولّد الصورة الآن';
+      showToast('❌ فشل توليد الصورة، جرب مرة أخرى أو اختر نمطاً مختلفاً');
+    };
+
+    img.src = imgUrl;
+  });
+
+  // Auto-trigger AI generation on theme input when auto-sync enabled
+  function autoApplyAiBackground(theme) {
+    // Map Arabic themes to style keys
+    const str = String(theme).toLowerCase();
+    let styleKey = 'islamic';
+    if (str.includes('طبيع') || str.includes('شجر') || str.includes('نهر')) styleKey = 'nature';
+    else if (str.includes('نجوم') || str.includes('سماء') || str.includes('كون')) styleKey = 'galaxy';
+    else if (str.includes('جبل') || str.includes('شلال')) styleKey = 'mountains';
+    else if (str.includes('صحراء') || str.includes('رمل')) styleKey = 'desert';
+    else if (str.includes('بحر') || str.includes('محيط') || str.includes('ماء')) styleKey = 'ocean';
+    else if (str.includes('خط') || str.includes('كتابة') || str.includes('زخرف')) styleKey = 'calligraphy';
+
+    aiImgStyle.value = styleKey;
+  }
+
+  // AI Content Generation
+  const generateContentBtn = document.getElementById('generateContentBtn');
+  const contentTypeSelect = document.getElementById('contentType');
+  const themeInput = document.getElementById('themeInput');
+
+  generateContentBtn.addEventListener('click', async () => {
+    generateContentBtn.disabled = true;
+    generateContentBtn.textContent = '⏳ جاري التوليد بالذكاء الاصطناعي...';
+
+    const contentType = contentTypeSelect.value;
+    const theme = themeInput.value.trim();
+
+    try {
+      // call generateIslamicContent function
+      const result = await generateIslamicContent({
+        contentType,
+        theme,
+        customModel: null // standard model
+      });
+
+      if (result.text) {
+        localState.text = result.text;
+        localState.source = result.source || '';
+        
+        manualText.value = localState.text;
+        manualSource.value = localState.source;
+        
+        previewText.textContent = localState.text;
+        previewSource.textContent = localState.source;
+
+        // Custom theme background logic
+        if (result.bgDescription) {
+          // Generate a custom colored SVG gradient template dynamically
+          const randomColors = generateRandomColorsForTheme(theme || result.bgDescription);
+          const customSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+            <defs>
+              <linearGradient id="dyn-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="${randomColors[0]}" />
+                <stop offset="100%" stop-color="${randomColors[1]}" />
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#dyn-grad)" />
+            <circle cx="400" cy="400" r="300" fill="${randomColors[2]}" opacity="0.15" filter="blur(50px)" />
+            <path d="M 0,400 Q 200,200 400,400 T 800,400" stroke="#FFF" stroke-width="1" fill="none" opacity="0.2"/>
+            <path d="M 0,300 Q 300,500 600,200 T 800,500" stroke="#FFF" stroke-dasharray="5,5" stroke-width="0.8" fill="none" opacity="0.15"/>
+          </svg>`;
+          svgContainer.innerHTML = customSvg;
+          showToast('✨ تم توليد نص وتعديل الخلفية لتتناسب معه!');
+        } else {
+          showToast('✨ تم توليد النص بنجاح!');
+        }
+      }
+    } catch (err) {
+      showToast('❌ فشل توليد المحتوى: ' + err.message);
+      console.error(err);
+    } finally {
+      generateContentBtn.disabled = false;
+      generateContentBtn.textContent = '✨ توليد النص بالذكاء الاصطناعي';
+    }
+  });
+
+  // Helper to generate coordinates of colors
+  function generateRandomColorsForTheme(theme) {
+    // Generate color pairs based on keyword search
+    const str = String(theme).toLowerCase();
+    if (str.includes('صبر') || str.includes('ليل') || str.includes('هدوء')) {
+      return ['#0D1B2A', '#1B263B', '#415A77'];
+    }
+    if (str.includes('جنه') || str.includes('خضار') || str.includes('سلام')) {
+      return ['#004B23', '#38B000', '#70E000'];
+    }
+    if (str.includes('حب') || str.includes('رحمه') || str.includes('تسامح')) {
+      return ['#4A154B', '#611f69', '#E01E5A'];
+    }
+    if (str.includes('نور') || str.includes('نجاح') || str.includes('أمل')) {
+      return ['#FF5A3C', '#E8A400', '#FCEDBD'];
+    }
+    // Default dynamic colors
+    return ['#140B1A', '#2D1B36', '#E8A400'];
+  }
+
+  // --- SVG Random Generation ---
+  document.getElementById('generateSvgBtn').addEventListener('click', () => {
+    const colors = [
+      ['#1E3C40', '#0A181C', '#E8A400'],
+      ['#2D1B36', '#140B1A', '#FF4FA3'],
+      ['#0D0914', '#1E8F86', '#7B4FA0'],
+      ['#FF5A3C', '#E8A400', '#FFE4DB'],
+      ['#18131B', '#7B4FA0', '#1E8F86'],
+      ['#004d40', '#00796b', '#80cbc4'],
+      ['#3e2723', '#4e342e', '#ffb74d']
+    ];
+    const rand = colors[Math.floor(Math.random() * colors.length)];
+    const customSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+      <defs>
+        <radialGradient id="rand-grad" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="${rand[0]}" />
+          <stop offset="100%" stop-color="${rand[1]}" />
+        </radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#rand-grad)" />
+      <g stroke="${rand[2]}" fill="none" opacity="0.15" stroke-width="2">
+        <circle cx="400" cy="400" r="320" />
+        <circle cx="400" cy="400" r="240" />
+        <polygon points="400,160 570,270 570,490 400,600 230,490 230,270" />
+        <polygon points="400,160 230,270 570,270 400,600 230,490 570,490" />
+      </g>
+    </svg>`;
+    svgContainer.innerHTML = customSvg;
+    showToast('🎨 تم توليد خلفية متجهات SVG جديدة عشوائياً!');
+  });
+
+  // ================================================================
+  // EXPORT / DOWNLOAD IMPLEMENTATION
+  // ================================================================
+
+  // 1. Download as SVG
+  document.getElementById('downloadSvgBtn').addEventListener('click', () => {
+    try {
+      const svgContent = svgContainer.querySelector('svg').cloneNode(true);
+      
+      // Inject Text & Metadata to the SVG for full vector download
+      svgContent.setAttribute('width', '800');
+      svgContent.setAttribute('height', '800');
+
+      // Create a style element for font family
+      const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      styleEl.textContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&family=Lalezar&family=Changa:wght@400;700&family=Tajawal:wght@400;700&display=swap');
+        .quote-txt {
+          font-family: ${fontFamilySelect.value};
+          font-size: ${fontSizeInput.value}px;
+          fill: ${textColorInput.value};
+          font-weight: ${fontWeightSelect.value};
+          text-anchor: middle;
+        }
+        .quote-src {
+          font-family: ${fontFamilySelect.value};
+          font-size: ${sourceSizeInput.value}px;
+          fill: ${textColorInput.value};
+          opacity: 0.85;
+          text-anchor: middle;
+          font-weight: bold;
+        }
+      `;
+      svgContent.appendChild(styleEl);
+
+      // Glass overlay rect if opacity > 0
+      if (parseFloat(glassOpacity.value) > 0) {
+        const glassRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        glassRect.setAttribute('width', '100%');
+        glassRect.setAttribute('height', '100%');
+        glassRect.setAttribute('fill', '#201822');
+        glassRect.setAttribute('opacity', glassOpacity.value);
+        svgContent.appendChild(glassRect);
+      }
+
+      // Add simple or islamic frame
+      const frameVal = frameStyleSelect.value;
+      if (frameVal === 'simple') {
+        const f = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        f.setAttribute('x', '20');
+        f.setAttribute('y', '20');
+        f.setAttribute('width', '760');
+        f.setAttribute('height', '760');
+        f.setAttribute('fill', 'none');
+        f.setAttribute('stroke', 'rgba(255, 255, 255, 0.4)');
+        f.setAttribute('stroke-width', '2');
+        f.setAttribute('rx', '8');
+        svgContent.appendChild(f);
+      }
+
+      // Add Text groups
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      
+      // Split text into lines for SVG rendering
+      const lines = localState.text.split('\n');
+      lines.forEach((line, idx) => {
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', '400');
+        t.setAttribute('y', String(360 + (idx * (parseInt(fontSizeInput.value) * 1.5))));
+        t.setAttribute('class', 'quote-txt');
+        t.textContent = line;
+        g.appendChild(t);
+      });
+
+      // Add Source text
+      if (localState.source) {
+        const s = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        s.setAttribute('x', '400');
+        s.setAttribute('y', String(420 + (lines.length * (parseInt(fontSizeInput.value) * 1.5))));
+        s.setAttribute('class', 'quote-src');
+        s.textContent = localState.source;
+        g.appendChild(s);
+      }
+
+      svgContent.appendChild(g);
+
+      // Trigger download
+      const svgString = new XMLSerializer().serializeToString(svgContent);
+      const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `PrompLab_Image_${Date.now()}.svg`;
+      link.click();
+      showToast('📐 تم تحميل ملف الـ SVG بنجاح!');
+    } catch (e) {
+      showToast('❌ فشل تصدير SVG: ' + e.message);
+    }
+  });
+
+  // Helper to draw to export canvas for PNG/JPG
+  function drawToCanvas(format = 'png') {
+    return new Promise((resolve, reject) => {
+      const canvas = document.getElementById('exportCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = 800;
+      canvas.height = 800;
+      
+      // Clean canvas
+      ctx.clearRect(0,0,800,800);
+
+      // Render Background
+      if (localState.bgType === 'svg-presets') {
+        // Render SVG to Canvas
+        const svgContent = svgContainer.querySelector('svg').outerHTML;
+        const img = new Image();
+        const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, 800, 800);
+          URL.revokeObjectURL(url);
+          drawOverlaysAndText(ctx, canvas, format, resolve, reject);
+        };
+        img.onerror = (e) => reject(new Error('فشل معالجة خلفية SVG'));
+        img.src = url;
+      } else if (localState.imageUrl) {
+        // Fetch image as blob to avoid CORS canvas taint
+        fetch(localState.imageUrl)
+          .then(res => {
+            if (!res.ok) throw new Error('فشل التحميل');
+            return res.blob();
+          })
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, 0, 0, 800, 800);
+              URL.revokeObjectURL(blobUrl);
+              drawOverlaysAndText(ctx, canvas, format, resolve, reject);
+            };
+            img.onerror = () => reject(new Error('فشل رسم الصورة على الكانفس'));
+            img.src = blobUrl;
+          })
+          .catch(() => {
+            // Fallback: draw dark background + text only
+            ctx.fillStyle = '#1A0F2E';
+            ctx.fillRect(0, 0, 800, 800);
+            drawOverlaysAndText(ctx, canvas, format, resolve, reject);
+          });
+      } else {
+        ctx.fillStyle = '#140B1A';
+        ctx.fillRect(0,0,800,800);
+        drawOverlaysAndText(ctx, canvas, format, resolve, reject);
+      }
+    });
+  }
+
+  function drawOverlaysAndText(ctx, canvas, format, resolve, reject) {
+    // Glass overlay
+    const op = parseFloat(glassOpacity.value);
+    if (op > 0) {
+      ctx.fillStyle = `rgba(32, 24, 34, ${op})`;
+      ctx.fillRect(0, 0, 800, 800);
+    }
+
+    // Draw Frame on Canvas using the new frame picker state
+    const fw = parseInt(currentFrameWidth) || 3;
+    const fc = currentFrameColor || '#FFFFFF';
+    const margin = 20;
+
+    ctx.save();
+    if (currentFrameStyle === 'simple') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+    } else if (currentFrameStyle === 'rounded') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      const r = 24;
+      ctx.beginPath();
+      ctx.moveTo(margin + r, margin);
+      ctx.arcTo(800 - margin, margin, 800 - margin, margin + r, r);
+      ctx.arcTo(800 - margin, 800 - margin, 800 - margin - r, 800 - margin, r);
+      ctx.arcTo(margin, 800 - margin, margin, 800 - margin - r, r);
+      ctx.arcTo(margin, margin, margin + r, margin, r);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (currentFrameStyle === 'double') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+      ctx.strokeRect(margin + 8, margin + 8, 800 - (margin + 8) * 2, 800 - (margin + 8) * 2);
+    } else if (currentFrameStyle === 'corners') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      const cs = 40; // corner size
+      // Top-left
+      ctx.beginPath(); ctx.moveTo(margin, margin + cs); ctx.lineTo(margin, margin); ctx.lineTo(margin + cs, margin); ctx.stroke();
+      // Top-right
+      ctx.beginPath(); ctx.moveTo(800 - margin - cs, margin); ctx.lineTo(800 - margin, margin); ctx.lineTo(800 - margin, margin + cs); ctx.stroke();
+      // Bottom-left
+      ctx.beginPath(); ctx.moveTo(margin, 800 - margin - cs); ctx.lineTo(margin, 800 - margin); ctx.lineTo(margin + cs, 800 - margin); ctx.stroke();
+      // Bottom-right
+      ctx.beginPath(); ctx.moveTo(800 - margin - cs, 800 - margin); ctx.lineTo(800 - margin, 800 - margin); ctx.lineTo(800 - margin, 800 - margin - cs); ctx.stroke();
+    } else if (currentFrameStyle === 'islamic') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+      ctx.shadowColor = fc;
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+      ctx.shadowBlur = 0;
+    } else if (currentFrameStyle === 'glow') {
+      ctx.shadowColor = fc;
+      ctx.shadowBlur = 30;
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+      ctx.shadowBlur = 0;
+    } else if (currentFrameStyle === 'dashed') {
+      ctx.strokeStyle = fc;
+      ctx.lineWidth = fw;
+      ctx.setLineDash([10, 8]);
+      ctx.strokeRect(margin, margin, 800 - margin * 2, 800 - margin * 2);
+      ctx.setLineDash([]);
+    } else if (currentFrameStyle === 'film') {
+      // Simulate film strip with thick dark border
+      ctx.fillStyle = fc || 'rgba(0,0,0,0.85)';
+      const bw = fw * 3;
+      ctx.fillRect(0, 0, 800, bw); // top
+      ctx.fillRect(0, 800 - bw, 800, bw); // bottom
+      ctx.fillRect(0, 0, bw, 800); // left
+      ctx.fillRect(800 - bw, 0, bw, 800); // right
+    }
+    ctx.restore();
+
+    // Text Setup
+    const fontStr = fontFamilySelect.value;
+    const cleanFontName = fontStr.split(',')[0].replace(/'/g, '').replace(/"/g, '');
+    
+    // Draw Main Text
+    ctx.fillStyle = textColorInput.value;
+    ctx.textAlign = textAlignSelect.value;
+    ctx.textBaseline = 'middle';
+    
+    const size = parseInt(fontSizeInput.value);
+    const weight = fontWeightSelect.value === 'bold' ? 'bold' : 'normal';
+    ctx.font = `${weight} ${size}px ${cleanFontName}`;
+
+    const lines = localState.text.split('\n');
+    let startY = 400 - ((lines.length - 1) * size * 0.75);
+
+    lines.forEach((line, index) => {
+      ctx.fillText(line, 400, startY + (index * size * 1.5));
+    });
+
+    // Draw Source Text
+    if (localState.source) {
+      const sSize = parseInt(sourceSizeInput.value);
+      ctx.font = `bold ${sSize}px ${cleanFontName}`;
+      ctx.fillStyle = textColorInput.value;
+      ctx.fillText(localState.source, 400, startY + (lines.length * size * 1.5) + 30);
+    }
+
+    // Trigger download
+    const type = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    const quality = format === 'jpg' ? 0.9 : 1.0;
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `PrompLab_Card_${Date.now()}.${format}`;
+        link.click();
+        resolve();
+      } else {
+        reject(new Error('فشل تصدير ملف الصورة'));
+      }
+    }, type, quality);
+  }
+
+  // PNG Click Handler
+  document.getElementById('downloadPngBtn').addEventListener('click', async () => {
+    try {
+      showToast('⏳ جاري إعداد الصورة للتنزيل...');
+      await drawToCanvas('png');
+      showToast('✅ تم تحميل بطاقة PNG بنجاح!');
+    } catch (err) {
+      showToast('❌ فشل تحميل PNG: ' + err.message);
+    }
+  });
+
+  // JPG Click Handler
+  document.getElementById('downloadJpgBtn').addEventListener('click', async () => {
+    try {
+      showToast('⏳ جاري إعداد الصورة للتنزيل...');
+      await drawToCanvas('jpg');
+      showToast('✅ تم تحميل بطاقة JPG بنجاح!');
+    } catch (err) {
+      showToast('❌ فشل تحميل JPG: ' + err.message);
+    }
+  });
+
+</script>
+</body>
+</html>
