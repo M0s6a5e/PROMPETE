@@ -46,17 +46,13 @@ async function getApiKey() {
 
 // ─── System Prompts محسّنة لكل نوع محتوى ─────────────────
 function buildSystemPrompt(type, planTier = 'free') {
-  const depthNote = planTier === 'king'
-    ? 'المستخدم يملك باقة الملك: اجعل البرومبتات شاملة ومطوّلة بأقصى تفاصيل ممكنة مع أمثلة ومتغيرات بديلة.'
-    : planTier === 'pro'
-    ? 'المستخدم يملك باقة برو: اجعل البرومبتات مفصّلة واحترافية مع تفاصيل تقنية كافية.'
-    : 'المستخدم يملك الباقة المجانية: اجعل البرومبتات واضحة وعملية وقابلة للتطبيق فوراً.';
+  const depthNote = 'اجعل البرومبتات شاملة ومطوّلة بأقصى تفاصيل ممكنة مع إعطاء أمثلة وقوالب جاهزة ومتغيرات بديلة لتناسب جميع الاحتياجات.';
 
   const prompts = {
     video: `أنت خبير محترف في كتابة البرومبتات للفيديو بالذكاء الاصطناعي على مستوى عالمي.
 ${depthNote}
 
-مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات كاملة ومرتبة خطوة بخطوة لإنشاء فيديو احترافي.
+مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات كاملة ومرتبة خطوة بخطوة لإنشاء فيديو احترافي، مع إضافة أمثلة تطبيقية مقترحة ومفصلة.
 
 تقييم الطلب أولاً:
 إذا كان الطلب مبهماً جداً أو يفتقد لتفاصيل أساسية (الحركة، الأجواء، الإضاءة، الأسلوب)، أرجع:
@@ -85,30 +81,30 @@ ${depthNote}
 {
   "needsMoreDetails": false,
   "tools": [
-    {"name": "اسم الأداة", "type": "مجاني|مدفوع", "url": "https://...", "desc": "سبب اختيارها وما تتميز به"},
-    {"name": "بديل ثانٍ", "type": "مجاني|مدفوع", "url": "https://...", "desc": "متى تستخدمه"}
+    {"name": "Runway Gen-3 Alpha", "type": "مجاني", "url": "https://runwayml.com", "desc": "مثالية للحركة فائقة الواقعية واللقطات السينمائية."},
+    {"name": "Luma Dream Machine", "type": "مجاني", "url": "https://lumalabs.ai/dream-machine", "desc": "ممتازة لسرعة المعالجة وتفسير الحركات المعقدة."}
   ],
   "plan": [
-    {"title": "🎬 1. وصف المشهد الرئيسي (Main Scene)", "prompt": "برومبت كامل ومفصّل بالعربية والإنجليزية يشمل: الموضوع، البيئة، الزاوية، التفاصيل البصرية..."},
-    {"title": "🎥 2. حركة الكاميرا والإخراج (Camera & Direction)", "prompt": "نوع الحركة، سرعتها، زاوية التصوير، أسلوب الإخراج..."},
-    {"title": "💡 3. الإضاءة والجو البصري (Lighting & Atmosphere)", "prompt": "نوع الإضاءة، درجات الألوان، العمق البصري، تأثيرات الجو..."},
-    {"title": "🎵 4. الصوت والموسيقى التصويرية (Sound & Music)", "prompt": "وصف الموسيقى المطلوبة، المؤثرات الصوتية، الإيقاع..."},
-    {"title": "✂️ 5. المونتاج والتعديلات النهائية (Editing & Post)", "prompt": "تعليمات تفصيلية للمونتاج، الفلاتر، التصحيح اللوني، الإيقاع التحريري..."}
+    {"title": "🎬 1. وصف المشهد الرئيسي (Main Scene)", "prompt": "برومبت كامل ومفصّل بالإنجليزية والعربية جاهز للنسخ: [ضع البرومبت هنا بالتفصيل]... مثال مقترح: Cinematic shot of a cozy cafe, golden sunlight streaming through glass windows, dust motes floating in the air, 8k resolution, photorealistic, highly detailed."},
+    {"title": "🎥 2. حركة الكاميرا والإخراج (Camera & Direction)", "prompt": "أوامر الكاميرا المقترحة للأداة: Slow pan left, tracking shot of the coffee machine, shallow depth of field, cinematic lighting."},
+    {"title": "💡 3. الإضاءة والجو البصري (Lighting & Atmosphere)", "prompt": "Warm ambient lighting, volumetric light rays, soft shadows, cozy morning atmosphere, warm color grading."},
+    {"title": "🎵 4. الصوت والموسيقى التصويرية (Sound & Music)", "prompt": "وصف الصوت المقترح لإنشائه في أدوات الصوت: Acoustic folk guitar melody, soft cafe chatter in the background, warm and gentle mood, 60 BPM."},
+    {"title": "✂️ 5. المونتاج والتعديلات النهائية (Editing & Post)", "prompt": "تعليمات المونتاج: Slow cuts, color match warmth, apply subtle film grain, transition using light leaks."}
   ],
   "tips": [
-    "نصيحة احترافية محددة 1",
-    "نصيحة احترافية محددة 2",
-    "نصيحة احترافية محددة 3"
+    "ابدأ ببرومبتات قصيرة أولاً ثم أضف التفاصيل تدريجياً لضمان ثبات الجودة.",
+    "استخدم معاملات التحكم في الحركة (motion slider) إن وجدت لزيادة أو تقليل سرعة حركة العناصر.",
+    "قم بتوليد 3 إلى 4 بدائل للمشهد لاختيار اللقطة الأنسب لمشروعك."
   ]
 }
 
 الأدوات المعروفة: Runway Gen-3 Alpha, Kling AI, Pika 2.0, Luma Dream Machine, Hailuo AI, Sora (OpenAI).
-اكتب البرومبتات بتفصيل حقيقي — لا تكتفِ بالعناوين العامة.`,
+اكتب البرومبتات والأمثلة المقترحة بتفصيل حقيقي وبجودة عالية جداً.`,
 
     image: `أنت خبير عالمي في كتابة البرومبتات للصور بالذكاء الاصطناعي.
 ${depthNote}
 
-مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات كاملة لإنشاء صور احترافية.
+مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات كاملة لإنشاء صور احترافية مع إضافة أمثلة وقوالب برومبت جاهزة للاستخدام.
 
 تقييم الطلب أولاً:
 إذا كان الطلب مبهماً أو يفتقد لتفاصيل (النمط الفني، الألوان، الأبعاد)، أرجع:
@@ -137,20 +133,20 @@ ${depthNote}
 {
   "needsMoreDetails": false,
   "tools": [
-    {"name": "الأداة", "type": "مجاني|مدفوع", "url": "https://...", "desc": "لماذا هي الأفضل لهذا الطلب"},
-    {"name": "بديل", "type": "مجاني|مدفوع", "url": "https://...", "desc": "حالات استخدامه"}
+    {"name": "Midjourney v6.1", "type": "مدفوع", "url": "https://midjourney.com", "desc": "الأفضل للصور الفنية وفائقة الواقعية والتفاصيل الدقيقة."},
+    {"name": "Flux.1", "type": "مجاني", "url": "https://fal.ai", "desc": "الجيل الجديد المتميز في محاكاة النصوص المكتوبة بدقة وتفاصيل الوجه."}
   ],
   "plan": [
-    {"title": "🖼️ 1. البرومبت الرئيسي (Main Prompt)", "prompt": "وصف كامل ودقيق بالإنجليزية: الموضوع، التفاصيل، الزاوية، الإضاءة، الأسلوب الفني..."},
-    {"title": "🎨 2. الأسلوب والجودة (Style & Quality)", "prompt": "keywords للنمط الفني: hyperrealistic, 8K resolution, studio lighting, bokeh, sharp focus..."},
-    {"title": "🚫 3. البرومبت السلبي (Negative Prompt)", "prompt": "ugly, blurry, deformed, extra limbs, watermark, low quality, distorted..."},
-    {"title": "⚙️ 4. المعاملات التقنية (Parameters)", "prompt": "--ar 16:9 --v 6.1 --style raw --q 2 --s 750 أو ما يناسب الأداة..."},
-    {"title": "🔧 5. التحسينات والتنويعات (Variations)", "prompt": "طريقة توليد تنويعات، upscaling، تعديل أجزاء معينة (inpainting)..."}
+    {"title": "🖼️ 1. البرومبت الرئيسي (Main Prompt)", "prompt": "وصف كامل ودقيق بالإنجليزية جاهز للنسخ: [اكتب البرومبت هنا]... مثال مقترح: A high-end luxury watch placed on a dark reflective obsidian stone, water droplets on the surface, professional product photography, moody studio lighting, sharp details, 8k resolution."},
+    {"title": "🎨 2. الأسلوب والجودة (Style & Quality)", "prompt": "كلمات مفتاحية مضافة للجودة: hyperrealistic, commercial photography, Hasselblad photo, global illumination, ray tracing, depth of field."},
+    {"title": "🚫 3. البرومبت السلبي (Negative Prompt)", "prompt": "الكلمات غير المرغوبة للأدوات التي تدعمها: ugly, deformed, blurry, low resolution, cheap look, cartoonish, oversaturated, text errors."},
+    {"title": "⚙️ 4. المعاملات التقنية (Parameters)", "prompt": "--ar 16:9 --style raw --v 6.1 --stylize 250"},
+    {"title": "🔧 5. التحسينات والتنويعات (Variations)", "prompt": "نصائح للتنويع والترقية: استخدم ميزة Inpainting لتعديل عقارب الساعة، وUpscale (Creative) لزيادة التفاصيل."}
   ],
   "tips": [
-    "نصيحة مهمة 1 مع تفاصيل عملية",
-    "نصيحة مهمة 2 مع تفاصيل عملية",
-    "نصيحة مهمة 3 مع تفاصيل عملية"
+    "الذكاء الاصطناعي يستجيب للمصطلحات الفوتوغرافية مثل نوع الكاميرا والعدسة (Hasselblad, 85mm f/1.4).",
+    "إذا كنت تستخدم Flux، يمكنك كتابة نصوص دقيقة داخل علامات الاقتباس لتظهر بشكل صحيح داخل الصورة.",
+    "نسبة الأبعاد --ar 16:9 تناسب اليوتيوب والخلفيات، بينما --ar 9:16 تناسب الهواتف والستوري."
   ]
 }
 
@@ -159,7 +155,7 @@ ${depthNote}
     music: `أنت خبير عالمي في كتابة البرومبتات لتوليد الموسيقى بالذكاء الاصطناعي.
 ${depthNote}
 
-مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات متكاملة لإنشاء مقطوعة موسيقية احترافية.
+مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات متكاملة لإنشاء مقطوعة موسيقية احترافية مع كتابة أمثلة وتصنيفات (Tags) مناسبة.
 
 تقييم الطلب أولاً:
 إذا كان الطلب مبهماً أو يفتقد لتفاصيل (النوع، الإيقاع، الأدوات)، أرجع:
@@ -188,20 +184,20 @@ ${depthNote}
 {
   "needsMoreDetails": false,
   "tools": [
-    {"name": "الأداة", "type": "مجاني|مدفوع", "url": "https://...", "desc": "ميزتها لهذا النوع الموسيقي"},
-    {"name": "بديل", "type": "مجاني|مدفوع", "url": "https://...", "desc": "متى يُفضَّل"}
+    {"name": "Suno AI v4", "type": "مجاني", "url": "https://suno.com", "desc": "الأفضل لتوليد الأغاني الكاملة بكلمات وأداء صوتي بشري مذهل."},
+    {"name": "Udio", "type": "مجاني", "url": "https://udio.com", "desc": "تتميز بجودة الاستوديو والمكساج وتوزيع الآلات بشكل مذهل."}
   ],
   "plan": [
-    {"title": "🎵 1. وصف المقطوعة الكاملة", "prompt": "وصف شامل: النوع، الجو، المدة، الغرض، الاستخدام المقصود..."},
-    {"title": "🎹 2. الأسلوب والآلات الموسيقية", "prompt": "genre tags: cinematic, orchestral / instruments: violin, piano / mood: epic, emotional / tempo: 120 BPM..."},
-    {"title": "📐 3. بنية المقطوعة (Structure)", "prompt": "Intro (0:00-0:20): هادئ / Verse (0:20-0:50): متصاعد / Chorus (0:50-1:20): ذروة / Bridge / Outro..."},
-    {"title": "📝 4. كلمات الأغنية أو الإرشادات الصوتية", "prompt": "كلمات مقترحة مع إرشادات الأداء / أو: instrumental only with vocal hints..."},
-    {"title": "🎚️ 5. الإنتاج والمكساج (Production)", "prompt": "mixing style, mastering loudness, reverb depth, stereo width, EQ notes..."}
+    {"title": "🎵 1. وصف المقطوعة الكاملة", "prompt": "وصف فني للمقطوعة: [اكتب الوصف هنا]... مثال مقترح: A nostalgic lofi hip hop track for studying, dusty vinyl crackle, warm rhodes piano chords, smooth boom-bap drum beat, relaxed bassline, chill study vibe, instrumental."},
+    {"title": "🎹 2. الأسلوب والآلات الموسيقية", "prompt": "الكلمات الدلالية المقترحة للـ Style: lofi hip hop, chillhop, rhodes piano, boom bap drums, 80 BPM, instrumental, relaxing mood."},
+    {"title": "📐 3. بنية المقطوعة (Structure)", "prompt": "[Intro] - [Verse] - [Chorus] - [Bridge] - [Outro]"},
+    {"title": "📝 4. كلمات الأغنية أو الإرشادات الصوتية", "prompt": "إذا كانت أغنية بالكلمات ضعها هنا بتنسيق مناسب للأداة، أو اكتب [Instrumental only] مع وصف التأثيرات الصوتية كصوت المطر أو هواء خفيف."},
+    {"title": "🎚️ 5. الإنتاج والمكساج (Production)", "prompt": "تعليمات الإنتاج: Low-pass filter on drums, warm analog saturation, stereo width for piano, clean master."}
   ],
   "tips": [
-    "نصيحة إنتاج محددة 1",
-    "نصيحة إنتاج محددة 2",
-    "نصيحة إنتاج محددة 3"
+    "في Suno، استخدم علامات الحصر مثل [Verse] و [Chorus] لمساعدة الذكاء الاصطناعي في تنظيم بنية الأغنية.",
+    "عند استخدام Udio، يمكنك تمديد الأغنية (Extend) بمقاطع إضافية مدتها 32 ثانية لبناء مقطوعة طويلة ومتكاملة.",
+    "اكتب 'instrumental' بوضوح في صندوق الوصف والأسلوب لتجنب ظهور أصوات بشرية عشوائية."
   ]
 }
 
@@ -210,7 +206,7 @@ ${depthNote}
     website: `أنت خبير عالمي في كتابة البرومبتات لإنشاء المواقع بأدوات الذكاء الاصطناعي.
 ${depthNote}
 
-مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات شاملة لإنشاء موقع احترافي.
+مهمتك: تحليل طلب المستخدم وإنشاء خطة برومبتات شاملة لإنشاء موقع احترافي مع قوالب برومبت وأمثلة جاهزة لكتابتها في أدوات توليد الأكواد.
 
 تقييم الطلب أولاً:
 إذا كان الطلب مبهماً أو يفتقد لتفاصيل (نوع الموقع، الغرض، التصميم)، أرجع:
@@ -239,20 +235,20 @@ ${depthNote}
 {
   "needsMoreDetails": false,
   "tools": [
-    {"name": "الأداة", "type": "مجاني|مدفوع", "url": "https://...", "desc": "لماذا هي الأنسب لهذا المشروع"},
-    {"name": "بديل", "type": "مجاني|مدفوع", "url": "https://...", "desc": "متى يُفضَّل"}
+    {"name": "Bolt.new", "type": "مجاني", "url": "https://bolt.new", "desc": "تسمح لك ببناء، تشغيل وتثبيت تطبيقات الويب بالكامل في المتصفح باستخدام React وVite."},
+    {"name": "v0.dev", "type": "مجاني", "url": "https://v0.dev", "desc": "أداة رائعة من Vercel لتوليد واجهات مستخدم احترافية باستخدام Tailwind CSS وShadcn UI."}
   ],
   "plan": [
-    {"title": "🏗️ 1. وصف الموقع والهدف (Site Overview)", "prompt": "اكتب هذا في أداة الذكاء الاصطناعي: نوع الموقع، الجمهور المستهدف، الهدف الرئيسي، الشعور العام..."},
-    {"title": "🎨 2. التصميم والأقسام (Design & Sections)", "prompt": "تفاصيل كل قسم: Header (محتواه)، Hero section، Features، Testimonials، Pricing، Footer / الألوان والخطوط..."},
-    {"title": "⚙️ 3. الوظائف والمميزات التقنية", "prompt": "قائمة الميزات المطلوبة: نموذج تواصل، قاعدة بيانات، دفع إلكتروني، تسجيل دخول، API integrations..."},
-    {"title": "📝 4. المحتوى والنصوص (Content)", "prompt": "تعليمات كتابة المحتوى: عناوين، أوصاف، دعوات للفعل (CTAs)، نصوص تسويقية..."},
-    {"title": "🚀 5. SEO والنشر (Launch & SEO)", "prompt": "meta tags، title, description، performance optimization، hosting platform، deployment steps..."}
+    {"title": "🏗️ 1. وصف الموقع والهدف (Site Overview)", "prompt": "البرومبت الافتتاحي المقترح للأداة: Build a modern luxury real estate landing page with React. It should feature a clean design, dark mode aesthetics, hero section with a search bar, property grid, and an interactive contact form."},
+    {"title": "🎨 2. التصميم والأقسام (Design & Sections)", "prompt": "هيكل وتصميم الأقسام بالتفصيل: Hero section with background video placeholder, grid showing 6 properties with cards containing image, title, price, and 'View details' button. Use emerald green and gold colors. Dark theme: background #0a0e14, cards #121824."},
+    {"title": "⚙️ 3. الوظائف والمميزات التقنية", "prompt": "الميزات البرمجية التفاعلية: Filter functionality by location, price and property type. Simple local state storage for favorites list. Smooth transitions and hover effects using Framer Motion style."},
+    {"title": "📝 4. المحتوى والنصوص (Content)", "prompt": "نصوص وهمية مقترحة عالية الجودة: 'Find Your Dream Luxury Home' as hero title. 'Explore our curated collection of premier estates'."},
+    {"title": "🚀 5. SEO والنشر (Launch & SEO)", "prompt": "إعدادات النشر: React-helmet configuration for meta tags. Title: 'Elite Estates | Luxury Real Estate', Meta Description: 'Discover exclusive luxury properties for sale'."}
   ],
   "tips": [
-    "نصيحة تقنية محددة 1 مع تفاصيل",
-    "نصيحة تقنية محددة 2 مع تفاصيل",
-    "نصيحة تقنية محددة 3 مع تفاصيل"
+    "عند استخدام Bolt.new، يمكنك كتابة طلبات متتالية مثل 'أضف صفحة تفاصيل لكل عقار' وسيقوم بتحديث الكود بشكل ذكي.",
+    "استعن بمكتبة Lucide React للأيقونات، وShadcn UI للمكونات الجاهزة لضمان تصميم عصري.",
+    "تأكد من توافقية الألوان وتباينها لدعم سهولة الاستخدام ومتطلبات الوصول."
   ]
 }
 
@@ -292,8 +288,23 @@ ${description}
 }
 
 // ─── استدعاء OpenRouter API ───────────────────────────────
-async function callOpenRouter(model, systemPrompt, userMessage, signal = null, maxTokens = 3000) {
+async function callOpenRouter(model, systemPrompt, userMessage, signal = null, maxTokens = 3000, onChunk = null) {
   const apiKey = await getApiKey();
+
+  const bodyConfig = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userMessage }
+    ],
+    temperature: 0.75,
+    max_tokens: maxTokens,
+    response_format: { type: "json_object" }
+  };
+
+  if (onChunk) {
+    bodyConfig.stream = true;
+  }
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -304,22 +315,62 @@ async function callOpenRouter(model, systemPrompt, userMessage, signal = null, m
       'HTTP-Referer': window.location.origin,
       'X-Title': 'Prompt Lab - Prompeter'
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: userMessage }
-      ],
-      temperature: 0.75,
-      max_tokens: maxTokens,
-      response_format: { type: "json_object" }
-    })
+    body: JSON.stringify(bodyConfig)
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
     const errMsg = err.error?.message || `خطأ في الاتصال (${response.status})`;
     throw new Error(errMsg);
+  }
+
+  if (onChunk) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let fullText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        const cleanedLine = line.trim();
+        if (!cleanedLine) continue;
+        if (cleanedLine === "data: [DONE]") continue;
+
+        if (cleanedLine.startsWith("data: ")) {
+          const dataStr = cleanedLine.slice(6);
+          try {
+            const parsed = JSON.parse(dataStr);
+            const content = parsed.choices?.[0]?.delta?.content || "";
+            if (content) {
+              fullText += content;
+              onChunk(content, fullText);
+            }
+          } catch (e) {
+            // تجاهل أخطاء تحويل الأجزاء غير المكتملة
+          }
+        }
+      }
+    }
+
+    if (buffer.startsWith("data: ")) {
+      try {
+        const parsed = JSON.parse(buffer.slice(6));
+        const content = parsed.choices?.[0]?.delta?.content || "";
+        if (content) {
+          fullText += content;
+          onChunk(content, fullText);
+        }
+      } catch (e) {}
+    }
+
+    return fullText;
   }
 
   const data = await response.json();
@@ -330,13 +381,11 @@ async function callOpenRouter(model, systemPrompt, userMessage, signal = null, m
 
 // ─── تحديد max_tokens بحسب الباقة ────────────────────────
 function getMaxTokens(planTier) {
-  if (planTier === 'king') return 6000;
-  if (planTier === 'pro')  return 4500;
-  return 3000;
+  return 4000; // باقة مفتوحة للجميع بمعدل ممتاز
 }
 
 // ─── توليد خطة البرومبت ───────────────────────────────────
-export async function generatePromptPlan({ type, description, imageBase64, planModel, customModel }) {
+export async function generatePromptPlan({ type, description, imageBase64, planModel, customModel }, onChunk = null) {
   const systemPrompt = buildSystemPrompt(type, planModel);
 
   // الموديل: يستخدم الموديل المخصص إذا اختار المستخدم، وإلا الموديل الافتراضي
@@ -344,7 +393,7 @@ export async function generatePromptPlan({ type, description, imageBase64, planM
   const maxTokens = getMaxTokens(planModel);
 
   const userMsg = buildUserMessage(type, description, imageBase64);
-  const rawContent = await callOpenRouter(model, systemPrompt, userMsg, null, maxTokens);
+  const rawContent = await callOpenRouter(model, systemPrompt, userMsg, null, maxTokens, onChunk);
 
   let plan;
   try {

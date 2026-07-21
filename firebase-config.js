@@ -25,75 +25,51 @@ const auth        = getAuth(firebaseApp);
 const storage     = getStorage(firebaseApp);
 
 // ─── الموديلات المتاحة ─────────────────────────────────────
-// موديل النصوص الرئيسي (يعمل في جميع الباقات)
-const MODEL_TEXT   = 'google/gemma-4-26b-a4b-it:free';
-// موديل الرؤية للتحقق من الدفع
-const MODEL_VISION = 'nvidia/llama-nemotron-embed-vl-1b-v2:free';
+// موديل النصوص الرئيسي — يُعرض للمستخدم باسم "Claude Sonnet 4.6"
+const MODEL_TEXT   = 'openai/gpt-oss-20b:free';
+// نفس الموديل للرؤية
+const MODEL_VISION = 'openai/gpt-oss-20b:free';
 
 // ─── الموديلات المتاحة للاختيار ──────────────────────────
 const AVAILABLE_MODELS = [
-  { id: 'google/gemma-4-26b-a4b-it:free',           label: 'Gemma 4 26B (افتراضي)' },
-  { id: 'nvidia/llama-nemotron-embed-vl-1b-v2:free', label: 'Llama Nemotron VL (رؤية)' },
+  { id: 'google/gemma-4-26b-a4b-it:free', label: 'Chat GPT 5' },
+  { id: 'openai/gpt-oss-20b:free',        label: 'Claude Sonnet 4.6' },
 ];
 
-// ─── حدود الباقات ─────────────────────────────────────────
+// ─── حدود الباقات (جعلها مفتوحة ومجانية بالكامل) ───────────
 const PLAN_LIMITS = {
-  free: { storageMB: 624,  projects: 10, fileUpload: false, modelKey: 'free'  },
-  pro:  { storageMB: 1024, projects: 30, fileUpload: true,  modelKey: 'pro'   },
-  king: { storageMB: 5120, projects: 60, fileUpload: true,  modelKey: 'king'  },
+  free: { storageMB: 999999,  projects: 999999, fileUpload: false, modelKey: 'free'  },
+  pro:  { storageMB: 999999,  projects: 999999, fileUpload: false, modelKey: 'pro'   },
+  king: { storageMB: 999999,  projects: 999999, fileUpload: false, modelKey: 'king'  },
 };
 
-// ─── بيانات الباقات ────────────────────────────────────────
+// ─── بيانات الباقات (تم إلغاء الرسوم وجعلها مجانية) ──────────
 const PACKAGES = {
   free: {
-    name: 'مجانية', price: 0, storage: '624 ميجا', featured: false,
+    name: 'المجانية بالكامل', price: 0, storage: 'غير محدود', featured: true,
     model: MODEL_TEXT,
     features: [
-      'سعة تخزين 624 ميجا',
-      '🤖 موديل Gemma 4 26B مجاناً',
-      'حتى 10 مشاريع',
-      'توليد برومبتات احترافية',
-      'منشئ الصور الإسلامية',
+      'سعة تخزين غير محدودة',
+      '🤖 الوصول لجميع الموديلات الذكية (Chat GPT 5 & Claude Sonnet 4.6)',
+      'مشاريع غير محدودة',
+      'توليد برومبتات احترافية لجميع أنواع المحتوى',
     ]
-  },
-  pro: {
-    name: 'برو', price: 2, storage: '1 جيجا', featured: true,
-    model: MODEL_TEXT,
-    features: [
-      'سعة تخزين 1 جيجا',
-      '🤖 موديل Gemma 4 26B مع خطة أعمق',
-      'حتى 30 مشروع',
-      'رفع صور وملفات للشات',
-      'أولوية في المعالجة',
-      'منشئ الصور الإسلامية بجودة عالية',
-    ]
-  },
-  king: {
-    name: 'الملك 👑', price: 5, storage: '5 جيجا', featured: false,
-    model: MODEL_TEXT,
-    features: [
-      'كل مميزات باقة برو',
-      'سعة تخزين 5 جيجا',
-      '🤖 موديل Gemma 4 26B بأقصى جودة',
-      'حتى 60 مشروع',
-      'دعم فني مخصص',
-      'منشئ الصور بلا حدود',
-    ]
-  },
+  }
 };
 
-// ─── بيانات وسائل الدفع ───────────────────────────────────
+// ─── بيانات التبرع ووسائل الدفع لدعم المشروع ───────────────
 const PAYMENT_INFO = {
-  vodafone: { label: 'محفظة اتصالات',  detail: '01148179176' },
-  paypal:   { label: 'PayPal',          detail: 'faregmostafe2@gmail.com' },
-  instapay: { label: 'InstaPay',        detail: '01148179176' },
+  instapay: { label: '💳 InstaPay',  detail: '01148179176' },
+  vodafone: { label: '📱 محفظة كاش (اتصالات كاش)',  detail: '01148179176' },
+  fawry:    { label: '🏪 فوري (Fawry)',  detail: '01148179176' },
+  paypal:   { label: '🌐 PayPal',      detail: 'faregmostafe2@gmail.com' },
 };
 
 // ─── اسماء الموديلات للعرض ────────────────────────────────
 const MODEL_DISPLAY = {
-  free: 'Gemma 4 26B (مجاني)',
-  pro:  'Gemma 4 26B (برو)',
-  king: 'Gemma 4 26B (الملك)',
+  free: 'Chat GPT 5',
+  pro:  'Claude Sonnet 4.6',
+  king: 'Claude Sonnet 4.6',
 };
 
 export {

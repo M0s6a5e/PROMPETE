@@ -21,8 +21,268 @@ import { db, auth, storage,
          PLAN_LIMITS, PACKAGES,
          PAYMENT_INFO, MODEL_DISPLAY,
          AVAILABLE_MODELS, MODEL_TEXT, MODEL_VISION }   from './firebase-config.js';
-import { generatePromptPlan, fixSelectedText,
-         verifyPaymentProof, fileToBase64 }             from './ai-service.js';
+import { generatePromptPlan, fixSelectedText }             from './ai-service.js';
+
+
+// ─── Translation & Localization ────────────────────────────
+const translations = {
+  ar: {
+    page_title: "معمل البرومبت — من فكرتك إلى برومبت جاهز",
+    nav_home: "الرئيسية",
+    nav_workspace: "أنشئ برومبت",
+    nav_support: "دعم وتبرع",
+    login: "تسجيل الدخول",
+    hero_eyebrow: "استوديو البرومبتات الاحترافية",
+    hero_display: "اكتب فكرتك<br>مرة واحدة",
+    hero_sub: "اختَر إيه اللي عايز تنشئه — فيديو، صورة، موسيقى، أو موقع — واحكي فكرتك بأسلوبك، ومعمل البرومبت هيرجعلك خطة كاملة وأوامر جاهزة تلصقها في أي أداة ذكاء اصطناعي.",
+    hero_start: "ابدأ دلوقتي",
+    hero_support_btn: "دعم المشروع",
+    free_label: "مجاني",
+    terminal_placeholder: "إعلان قهوة صباحي، إضاءة دافئة، حركة كاميرا بطيئة من الأسفل للأعلى…",
+    type_video: "فيديو",
+    type_music: "موسيقى",
+    type_image: "صورة",
+    type_website: "موقع",
+    marquee_text: "فيديو ✦ صورة ✦ موسيقى ✦ موقع ✦ فيديو ✦ صورة ✦ موسيقى ✦ موقع ✦ فيديو ✦ صورة ✦ موسيقى ✦ موقع ✦",
+    picker_title: "إيه اللي عايز تنشئه؟",
+    picker_sub: "اختَر نوع المحتوى، وهنجهزلك أداة الذكاء الاصطناعي المناسبة وخطة أوامر كاملة.",
+    desc_video: "إعلانات، مشاهد سينمائية، كليبات قصيرة",
+    desc_image: "شعارات، بوسترات، صور منتجات",
+    desc_music: "مقطوعات، جينجل، خلفيات صوتية",
+    desc_website: "لاندنج بيدج، تطبيق ويب، متجر",
+    how_title: "إزاي بيشتغل؟",
+    how_step1_title: "اختر واحكي",
+    how_step1_desc: "حدد نوع المحتوى واكتب فكرتك بكلامك بوضوح وتفصيل.",
+    how_step2_title: "الذكاء الاصطناعي يجهزلك خطة",
+    how_step2_desc: "هيقترحلك الأداة المناسبة ويكتبلك أوامر مرتبة خطوة بخطوة مع أمثلة وقوالب جاهزة.",
+    how_step3_title: "انسخ والصق",
+    how_step3_desc: "خذ الأوامر زي ما هي — أو حدد أي جزء وعدّله — والصقها في أي منصة ذكاء اصطناعي.",
+    support_project_title: "دعم المشروع بالتبرع",
+    support_project_sub: "معمل البرومبت أصبح مجانياً ومفتوحاً بالكامل لخدمة الجميع! إذا أعجبك المشروع، يمكنك دعمنا بأي مبلغ لمساعدتنا في تغطية تكاليف الخوادم والتشغيل.",
+    content_type: "نوع المحتوى",
+    type_video_btn: "🎬 فيديو",
+    type_image_btn: "🖼️ صورة",
+    type_music_btn: "🎵 موسيقى",
+    type_website_btn: "💻 موقع",
+    account_status: "حالة الحساب",
+    free_unlimited: "✨ مجاني بالكامل",
+    saved_projects: "المشاريع المحفوظة",
+    recent_projects: "مشاريعي الأخيرة",
+    describe_idea: "احكيلنا فكرتك",
+    idea_description: "وصف الفكرة بالتفصيل",
+    project_name: "اسم المشروع (اختياري)",
+    choose_model: "اختر موديل الذكاء الاصطناعي",
+    generate_plan_btn: "🤖 جهّزلي الخطة",
+    active_model: "الموديل المفعّل:",
+    donate_link: "تبرع لدعم المشروع",
+    clarification_title: "🤔 تفاصيل إضافية مطلوبة (خيارات منسدلة)",
+    clarification_desc: "الذكاء الاصطناعي يود سؤالك عن بعض النقاط لتعديل الخطة:",
+    submit_inline_answers: "🚀 إرسال الأجوبة وإعادة التوليد",
+    loading_text: "الذكاء الاصطناعي بيجهز خطة البرومبت…",
+    loading_sub: "بيحلل فكرتك ويختار أفضل الأدوات",
+    followup_title: "🔄 استكمال وتعديل البرومبت (Follow up)",
+    followup_desc: "هل تريد استكمال البرومبت بمشهد آخر أو طلب تعديل محدد؟ اكتب طلبك الإضافي وسنكمل على برومبتك السابق:",
+    followup_submit_btn: "🤖 استكمل البرومبت",
+    copy_donation_btn: "نسخ تفاصيل التبرع",
+    wallet_label: "اتصالات كاش / فودافون كاش",
+    fawry_label: "فوري (Fawry)",
+    invite_code_title: "لديك كود دعوة؟",
+    invite_code_sub: "أدخل كودك للحصول على ميزات حصرية مستقبلية",
+    redeem_code_btn: "🔓 تفعيل الكود",
+    invite_code_note: "أكواد الدعوة تمنح حسابك شارة (عضو مميز) لتفعيل المميزات المستقبلية فور نزولها.",
+    invite_success_title: "تم تفعيل كودك بنجاح!",
+    invite_success_desc: "تم ترقية حسابك إلى باقة الميزات المستقبلية",
+    start_using_now: "ابدأ الاستخدام الآن",
+    not_logged_in: "مش مسجّل دخول لسه",
+    not_logged_in_sub: "سجّل دخولك عشان تحفظ مشاريعك على السحابة وتتابع مشاريعك.",
+    login_or_create: "تسجيل الدخول / إنشاء حساب",
+    logout: "🚪 تسجيل الخروج",
+    current_package: "الباقة الحالية",
+    storage: "سعة التخزين",
+    unlimited: "غير محدودة",
+    projects_count: "عدد المشاريع",
+    my_projects: "مشاريعي",
+    no_projects: "لسه معملتش أي مشروع. ابدأ من \"أنشئ برومبت\".",
+    view_project: "عرض المشروع",
+    fix_selection_btn: "✏️ اطلب تعديل هذا الجزء",
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    forgot_password: "نسيت كلمة المرور؟",
+    username: "اسم المستخدم",
+    confirm_password: "تأكيد كلمة المرور",
+    verification_note: "هيتبعتلك رمز تأكيد على بريدك.",
+    signup: "حساب جديد",
+    or: "أو",
+    continue_google: "المتابعة عبر Google",
+    continue_github: "المتابعة عبر GitHub",
+    email_verify_title: "تأكيد البريد الإلكتروني",
+    email_sent_to: "أرسلنا رسالة تأكيد إلى",
+    click_verification_link: "افتح الرسالة واضغط على رابط التأكيد.",
+    resend_email: "إعادة إرسال الرسالة",
+    already_verified_login: "تأكدت؟ دخول",
+    forgot_password_desc: "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.",
+    send_reset_link: "إرسال رابط الاستعادة",
+    go_back: "← رجوع",
+  },
+  en: {
+    page_title: "Prompt Lab — From Idea to Ready-to-Use Prompt",
+    nav_home: "Home",
+    nav_workspace: "Create Prompt",
+    nav_support: "Support & Donate",
+    login: "Login",
+    hero_eyebrow: "Professional Prompt Studio",
+    hero_display: "Write Your Idea<br>Once",
+    hero_sub: "Choose what you want to create — video, image, music, or website — describe it in your own words, and Prompt Lab will generate a complete plan and ready-to-use prompts.",
+    hero_start: "Start Now",
+    hero_support_btn: "Support Project",
+    free_label: "Free",
+    terminal_placeholder: "Morning coffee commercial, warm lighting, slow camera motion upwards...",
+    type_video: "Video",
+    type_music: "Music",
+    type_image: "Image",
+    type_website: "Website",
+    marquee_text: "Video ✦ Image ✦ Music ✦ Website ✦ Video ✦ Image ✦ Music ✦ Website ✦ Video ✦ Image ✦ Music ✦ Website ✦",
+    picker_title: "What do you want to create?",
+    picker_sub: "Choose the content type, and we will prepare the right AI tools and commands.",
+    desc_video: "Ads, cinematic scenes, short clips",
+    desc_image: "Logos, posters, product photos",
+    desc_music: "Tracks, jingles, background audio",
+    desc_website: "Landing pages, web apps, e-commerce",
+    how_title: "How it works?",
+    how_step1_title: "Choose & Describe",
+    how_step1_desc: "Select the content type and describe your idea in your own words.",
+    how_step2_title: "AI Generates a Plan",
+    how_step2_desc: "AI suggests the right tools and drafts step-by-step prompts with copyable templates.",
+    how_step3_title: "Copy & Paste",
+    how_step3_desc: "Copy the prompts or edit specific parts, then paste them directly into any AI platform.",
+    support_project_title: "Support the Project with Donations",
+    support_project_sub: "Prompt Lab is now completely free and open for everyone! If you like the project, you can support us with any donation amount to help cover hosting and server costs.",
+    content_type: "Content Type",
+    type_video_btn: "🎬 Video",
+    type_image_btn: "🖼️ Image",
+    type_music_btn: "🎵 Music",
+    type_website_btn: "💻 Website",
+    account_status: "Account Status",
+    free_unlimited: "✨ Fully Free",
+    saved_projects: "Saved Projects",
+    recent_projects: "Recent Projects",
+    describe_idea: "Describe Your Idea",
+    idea_description: "Detailed Idea Description",
+    project_name: "Project Name (Optional)",
+    choose_model: "Select AI Model",
+    generate_plan_btn: "🤖 Prepare the Plan",
+    active_model: "Active Model:",
+    donate_link: "Donate to support",
+    clarification_title: "🤔 Additional Details Needed (Dropdown Options)",
+    clarification_desc: "AI wants to clarify some details to optimize the generation:",
+    submit_inline_answers: "🚀 Submit Answers & Re-generate",
+    loading_text: "AI is preparing your prompt plan...",
+    loading_sub: "Analyzing your description and selecting the best tools",
+    followup_title: "🔄 Follow-up & Refine Prompt",
+    followup_desc: "Would you like to extend this prompt with another scene or ask for edits? Write it below:",
+    followup_submit_btn: "🤖 Extend Prompt",
+    copy_donation_btn: "Copy Donation Details",
+    wallet_label: "Etisalat Cash / Vodafone Cash",
+    fawry_label: "Fawry Pay",
+    invite_code_title: "Have an Invite Code?",
+    invite_code_sub: "Enter your code to unlock exclusive future features",
+    redeem_code_btn: "🔓 Activate Code",
+    invite_code_note: "Invite codes grant your account a (Premium Member) badge for early access to future features.",
+    invite_success_title: "Code activated successfully!",
+    invite_success_desc: "Your account is now upgraded to receive future updates first",
+    start_using_now: "Start Using Now",
+    not_logged_in: "Not Logged In Yet",
+    not_logged_in_sub: "Sign in to save your projects to the cloud and sync your drafts.",
+    login_or_create: "Login / Sign Up",
+    logout: "🚪 Logout",
+    current_package: "Current Plan",
+    storage: "Storage",
+    unlimited: "Unlimited",
+    projects_count: "Projects Count",
+    my_projects: "My Projects",
+    no_projects: "No projects yet. Start by going to 'Create Prompt'.",
+    view_project: "View Project",
+    fix_selection_btn: "✏️ Request edit for this part",
+    email: "Email Address",
+    password: "Password",
+    forgot_password: "Forgot Password?",
+    username: "Username",
+    confirm_password: "Confirm Password",
+    verification_note: "A verification code will be sent to your email.",
+    signup: "New Account",
+    or: "OR",
+    continue_google: "Continue with Google",
+    continue_github: "Continue with GitHub",
+    email_verify_title: "Email Verification Required",
+    email_sent_to: "We sent a verification email to",
+    click_verification_link: "Open the email and click the verification link.",
+    resend_email: "Resend Verification Email",
+    already_verified_login: "Verified? Login",
+    forgot_password_desc: "Enter your email address and we will send you a password reset link.",
+    send_reset_link: "Send Reset Link",
+    go_back: "← Back",
+  }
+};
+
+let currentLang = 'ar';
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+  const toggleBtn = document.getElementById('langToggleBtn');
+  if (toggleBtn) {
+    toggleBtn.textContent = lang === 'ar' ? 'English' : 'العربية';
+  }
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (translations[lang] && translations[lang][key]) {
+      el.innerHTML = translations[lang][key];
+    }
+  });
+
+  const descEl = document.getElementById('wsDescription');
+  if (descEl) {
+    descEl.placeholder = lang === 'ar' 
+      ? "مثال: عايز فيديو إعلاني قصير لكافيه صغير، جو صباحي دافئ، بدون كلام، مدته 15 ثانية…"
+      : "Example: I want a short video ad for a small cafe, warm morning atmosphere, no voiceover, 15 seconds long...";
+  }
+
+  const projEl = document.getElementById('wsProjectName');
+  if (projEl) {
+    projEl.placeholder = lang === 'ar' ? "مثال: إعلان كافيه الصباح" : "Example: Morning Cafe Ad";
+  }
+
+  const followEl = document.getElementById('followupDescription');
+  if (followEl) {
+    followEl.placeholder = lang === 'ar'
+      ? "مثال: أضف مشهداً ثانياً يظهر فيه المقهى وهو يمتلئ بالزبائن، واجعل الألوان أكثر دفئاً..."
+      : "Example: Add a second scene showing the cafe filling up with customers, and make the colors warmer...";
+  }
+
+  const inviteEl = document.getElementById('inviteCodeInput');
+  if (inviteEl) {
+    inviteEl.placeholder = lang === 'ar' ? "PRMP-XXXXXX" : "PRMP-XXXXXX";
+  }
+  
+  renderPricingHome();
+}
+
+function initLanguage() {
+  const saved = localStorage.getItem('lang');
+  if (saved) {
+    setLanguage(saved);
+  } else {
+    const browserLang = navigator.language || navigator.userLanguage;
+    const defaultLang = browserLang.startsWith('en') ? 'en' : 'ar';
+    setLanguage(defaultLang);
+  }
+}
 
 // ─── App State ─────────────────────────────────────────────
 const state = {
@@ -84,10 +344,15 @@ document.querySelectorAll('[data-nav]').forEach(el => {
   });
 });
 
-document.getElementById('openAccountBtn').addEventListener('click', () => showView('account'));
+document.getElementById('openAccountBtn')?.addEventListener('click', () => showView('account'));
+
+// Language toggle
+document.getElementById('langToggleBtn')?.addEventListener('click', () => {
+  setLanguage(currentLang === 'ar' ? 'en' : 'ar');
+});
 
 // Mobile burger
-document.getElementById('burgerBtn').addEventListener('click', () => {
+document.getElementById('burgerBtn')?.addEventListener('click', () => {
   document.getElementById('navInner').classList.toggle('is-open');
 });
 
@@ -109,59 +374,58 @@ document.querySelectorAll('[data-close]').forEach(btn => {
 document.querySelectorAll('.modal-overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) closeModal(ov.id); });
 });
-document.getElementById('openAuthBtn').addEventListener('click', () => openModal('authOverlay'));
+document.getElementById('openAuthBtn')?.addEventListener('click', () => openModal('authOverlay'));
 
 /* ================================================================
    PRICING CARDS
 ================================================================ */
 function pricingCardHTML(key) {
-  const p = PACKAGES[key];
-  const priceText = p.price === 0
-    ? 'مجانًا'
-    : `$${p.price}<span>/شهريًا</span>`;
-  const isCurrent = state.package === key;
-
-  return `
-    <div class="price-card ${p.featured ? 'is-featured' : ''}">
-      ${p.featured ? '<span class="price-stamp">الأكثر طلبًا</span>' : ''}
-      <p class="price-name">باقة ${p.name}</p>
-      <p class="price-amount">${priceText}</p>
-      <ul class="price-features">
-        ${p.features.map(f => `<li>${f}</li>`).join('')}
-      </ul>
-      ${isCurrent
-        ? `<div class="price-current-badge">✓ باقتك الحالية</div>`
-        : `<button class="btn ${p.featured ? 'btn-primary' : 'btn-outline'} btn-block"
-            data-choose-pkg="${key}">
-            ${key === 'free' ? 'ابدأ مجانًا' : 'اشترك الآن'}
-           </button>`
-      }
-    </div>`;
+  return '';
 }
 
 function renderPricingHome() {
   const el = document.getElementById('pricingCardsHome');
   if (!el) return;
-  el.innerHTML = `<div class="pricing-grid">${Object.keys(PACKAGES).map(pricingCardHTML).join('')}</div>`;
-  attachPricingListeners(el);
+  const copyText = currentLang === 'ar' ? 'نسخ التفاصيل' : 'Copy Details';
+  const cashLabel = currentLang === 'ar' ? 'محفظة كاش (اتصالات كاش)' : 'Cash Wallet (Etisalat/Vodafone)';
+  const fawryLabel = currentLang === 'ar' ? 'فوري (Fawry)' : 'Fawry Pay';
+
+  el.innerHTML = `
+    <div class="donation-grid-home">
+      <div class="price-card" style="text-align: center;">
+        <span class="type-icon" style="font-size:32px;">💳</span>
+        <h3 style="font-family:var(--font-ui); margin: 10px 0 5px;">InstaPay</h3>
+        <p style="font-weight: bold; font-size:18px; color:var(--ink); margin: 5px 0 15px;">01148179176</p>
+        <button class="btn btn-primary btn-block copy-donation-btn" data-copy="01148179176">${copyText}</button>
+      </div>
+      <div class="price-card" style="text-align: center;">
+        <span class="type-icon" style="font-size:32px;">📱</span>
+        <h3 style="font-family:var(--font-ui); margin: 10px 0 5px;">${cashLabel}</h3>
+        <p style="font-weight: bold; font-size:18px; color:var(--ink); margin: 5px 0 15px;">01148179176</p>
+        <button class="btn btn-primary btn-block copy-donation-btn" data-copy="01148179176">${copyText}</button>
+      </div>
+      <div class="price-card" style="text-align: center;">
+        <span class="type-icon" style="font-size:32px;">🏪</span>
+        <h3 style="font-family:var(--font-ui); margin: 10px 0 5px;">${fawryLabel}</h3>
+        <p style="font-weight: bold; font-size:18px; color:var(--ink); margin: 5px 0 15px;">01148179176</p>
+        <button class="btn btn-primary btn-block copy-donation-btn" data-copy="01148179176">${copyText}</button>
+      </div>
+      <div class="price-card" style="text-align: center;">
+        <span class="type-icon" style="font-size:32px;">🌐</span>
+        <h3 style="font-family:var(--font-ui); margin: 10px 0 5px;">PayPal</h3>
+        <p style="font-weight: bold; font-size:16px; color:var(--ink); margin: 5px 0 15px;">faregmostafe2@gmail.com</p>
+        <button class="btn btn-primary btn-block copy-donation-btn" data-copy="faregmostafe2@gmail.com">${copyText}</button>
+      </div>
+    </div>
+  `;
 }
 
 function renderPricingFull() {
-  const el = document.getElementById('pricingCardsFull');
-  if (!el) return;
-  el.innerHTML = `<div class="pricing-grid">${Object.keys(PACKAGES).map(pricingCardHTML).join('')}</div>`;
-  attachPricingListeners(el);
+  // Statically rendered in index.html
 }
 
 function attachPricingListeners(container) {
-  container.querySelectorAll('[data-choose-pkg]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.choosePkg;
-      if (!state.user) { openModal('authOverlay'); return; }
-      if (key === 'free') { showView('workspace'); return; }
-      openCheckout(key);
-    });
-  });
+  // Obsolete
 }
 
 renderPricingHome();
@@ -175,15 +439,20 @@ function renderWorkspaceSide() {
   });
 
   const lbl = TYPE_LABELS[state.selectedType]?.split(' ')[1] || '';
-  document.getElementById('wsTitle').textContent = `احكيلنا فكرتك عن الـ${lbl}`;
+  const titleEl = document.getElementById('wsTitle');
+  if (titleEl) {
+    titleEl.textContent = currentLang === 'ar' ? `احكيلنا فكرتك عن الـ${lbl}` : `Tell us your idea about ${lbl}`;
+  }
 
-  const limits = PLAN_LIMITS[state.package];
-  document.getElementById('wsProjectsUsed').textContent =
-    `${state.projectsUsed} / ${limits.projects}`;
-  document.getElementById('wsStorageVal').textContent =
-    `${state.storageUsedMB} ميجا / ${limits.storageMB} ميجا`;
-  document.getElementById('wsStorageFill').style.width =
-    `${Math.min(100, (state.storageUsedMB / limits.storageMB) * 100)}%`;
+  const wsProjectsUsedEl = document.getElementById('wsProjectsUsed');
+  if (wsProjectsUsedEl) {
+    wsProjectsUsedEl.textContent = `${state.projectsUsed}`;
+  }
+
+  const premiumBadge = document.getElementById('premiumBadge');
+  if (premiumBadge) {
+    premiumBadge.hidden = state.package === 'free';
+  }
 
   // Model name
   const modelEl = document.getElementById('wsModelName');
@@ -192,10 +461,6 @@ function renderWorkspaceSide() {
     const selectedLabel = AVAILABLE_MODELS.find(m => m.id === activeModelId)?.label || activeModelId;
     modelEl.textContent = selectedLabel;
   }
-
-  // File upload badge
-  const badge = document.getElementById('wsFileProBadge');
-  if (badge) badge.hidden = limits.fileUpload;
 
   // Quick projects
   renderQuickProjects();
@@ -206,6 +471,7 @@ document.querySelectorAll('.ws-type-btn').forEach(b => {
     state.selectedType = b.dataset.type;
     renderWorkspaceSide();
     document.getElementById('wsResult').hidden = true;
+    document.getElementById('wsFollowupBox').style.display = 'none';
   });
 });
 
@@ -230,59 +496,21 @@ function renderQuickProjects() {
   });
 }
 
-/* ─── File Drop ─── */
-function setupFileDrop(dropId, inputId, textId, onFile) {
-  const drop  = document.getElementById(dropId);
-  const input = document.getElementById(inputId);
-  if (!drop || !input) return;
-
-  drop.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => {
-    const f = input.files[0];
-    document.getElementById(textId).textContent =
-      f ? `✓ ${f.name}` : (drop.dataset.defaultText || 'اختر ملفاً');
-    drop.classList.toggle('has-file', !!f);
-    if (f && onFile) onFile(f);
-  });
-  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.style.background = '#fff'; });
-  drop.addEventListener('dragleave', () => drop.style.background = '');
-  drop.addEventListener('drop', e => {
-    e.preventDefault();
-    drop.style.background = '';
-    if (e.dataTransfer.files[0]) {
-      const dt = e.dataTransfer;
-      // Safari / Firefox workaround
-      try { input.files = dt.files; } catch {}
-      const f = dt.files[0];
-      document.getElementById(textId).textContent = `✓ ${f.name}`;
-      drop.classList.add('has-file');
-      if (onFile) onFile(f);
-    }
-  });
-}
-
-setupFileDrop('fileDrop', 'wsFile', 'fileDropText');
+// File drop omitted because file upload is deleted
 
 /* ─── Workspace Form Submit ─── */
-document.getElementById('wsForm').addEventListener('submit', async e => {
+document.getElementById('wsForm')?.addEventListener('submit', async e => {
   e.preventDefault();
 
   const description = document.getElementById('wsDescription').value.trim();
-  if (!description) { showToast('اكتب وصف فكرتك أولاً', 'error'); return; }
+  if (!description) { showToast(currentLang === 'ar' ? 'اكتب وصف فكرتك أولاً' : 'Write your idea description first', 'error'); return; }
 
   const limits = PLAN_LIMITS[state.package];
 
   // Check project limit
   if (state.user && state.projectsUsed >= limits.projects) {
-    showToast('وصلت لحد المشاريع. ارفع باقتك!', 'warning');
-    showView('pricing');
+    showToast(currentLang === 'ar' ? 'وصلت لحد المشاريع.' : 'Project limit reached.', 'warning');
     return;
-  }
-
-  // تنبيه إذا رفع المستخدم ملفاً وباقته لا تدعم ذلك
-  const wsFile = document.getElementById('wsFile').files[0];
-  if (wsFile && !limits.fileUpload) {
-    showToast('رفع الملفات متاح في باقة برو فقط', 'warning');
   }
 
   await executePromptGeneration(description, false);
@@ -423,7 +651,7 @@ document.addEventListener('mouseup', e => {
   }
 });
 
-document.getElementById('fixPopoverBtn').addEventListener('click', async () => {
+document.getElementById('fixPopoverBtn')?.addEventListener('click', async () => {
   const selectedText = window.getSelection().toString().trim();
   if (!selectedText || !fixingBlockId) return;
 
@@ -583,7 +811,7 @@ function showAuthScreen(name) {
 }
 
 // Reset on open
-document.getElementById('openAuthBtn').addEventListener('click', () => {
+document.getElementById('openAuthBtn')?.addEventListener('click', () => {
   showAuthScreen('authMainScreen');
   clearAuthErrors();
 });
@@ -616,7 +844,7 @@ function firebaseErrorAr(code) {
 }
 
 /* ─── Login ─── */
-document.getElementById('loginForm').addEventListener('submit', async e => {
+document.getElementById('loginForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   clearAuthErrors();
   const email    = document.getElementById('loginEmail').value.trim();
@@ -646,7 +874,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
 });
 
 /* ─── Signup ─── */
-document.getElementById('signupForm').addEventListener('submit', async e => {
+document.getElementById('signupForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   clearAuthErrors();
   const username = document.getElementById('signupUsername').value.trim();
@@ -694,7 +922,7 @@ document.getElementById('signupForm').addEventListener('submit', async e => {
 });
 
 /* ─── Resend Verify ─── */
-document.getElementById('resendVerifyBtn').addEventListener('click', async () => {
+document.getElementById('resendVerifyBtn')?.addEventListener('click', async () => {
   if (!auth.currentUser) return;
   try {
     const cleanPath = window.location.pathname.replace('index.html', '').replace(/\/$/, '');
@@ -708,7 +936,7 @@ document.getElementById('resendVerifyBtn').addEventListener('click', async () =>
 });
 
 /* ─── Already Verified ─── */
-document.getElementById('alreadyVerifiedBtn').addEventListener('click', async () => {
+document.getElementById('alreadyVerifiedBtn')?.addEventListener('click', async () => {
   if (!auth.currentUser) { showAuthScreen('authMainScreen'); return; }
   try {
     await reload(auth.currentUser);
@@ -723,14 +951,14 @@ document.getElementById('alreadyVerifiedBtn').addEventListener('click', async ()
 });
 
 /* ─── Forgot Password ─── */
-document.getElementById('forgotPassBtn').addEventListener('click', () => {
+document.getElementById('forgotPassBtn')?.addEventListener('click', () => {
   showAuthScreen('authResetScreen');
 });
-document.getElementById('backToLoginBtn').addEventListener('click', () => {
+document.getElementById('backToLoginBtn')?.addEventListener('click', () => {
   showAuthScreen('authMainScreen');
   clearAuthErrors();
 });
-document.getElementById('resetForm').addEventListener('submit', async e => {
+document.getElementById('resetForm')?.addEventListener('submit', async e => {
   e.preventDefault();
   clearAuthErrors();
   const email = document.getElementById('resetEmail').value.trim();
@@ -745,7 +973,7 @@ document.getElementById('resetForm').addEventListener('submit', async e => {
 });
 
 /* ─── Google Login ─── */
-document.getElementById('googleBtn').addEventListener('click', async () => {
+document.getElementById('googleBtn')?.addEventListener('click', async () => {
   const provider = new GoogleAuthProvider();
   try {
     const cred = await signInWithPopup(auth, provider);
@@ -765,7 +993,7 @@ document.getElementById('googleBtn').addEventListener('click', async () => {
 });
 
 /* ─── GitHub Login ─── */
-document.getElementById('githubBtn').addEventListener('click', async () => {
+document.getElementById('githubBtn')?.addEventListener('click', async () => {
   const provider = new GithubAuthProvider();
   try {
     const cred = await signInWithPopup(auth, provider);
@@ -826,18 +1054,12 @@ async function renderAccount() {
 
   // Package
   document.getElementById('accPackageName').textContent =
-    PACKAGES[state.package]?.name || 'مجانية';
-
-  // Storage
-  const limits = PLAN_LIMITS[state.package];
-  document.getElementById('accStorageFill').style.width =
-    `${Math.min(100, (state.storageUsedMB / limits.storageMB) * 100)}%`;
-  document.getElementById('accStorageVal').textContent =
-    `${state.storageUsedMB} ميجا / ${limits.storageMB} ميجا`;
+    state.package !== 'free' 
+      ? (currentLang === 'ar' ? 'مجانية بالكامل (عضو مميز ✨)' : 'Fully Free (Premium Member ✨)')
+      : (currentLang === 'ar' ? 'مجانية بالكامل ✨' : 'Fully Free ✨');
 
   // Projects count
-  document.getElementById('accProjectsVal').textContent =
-    `${state.projectsUsed} / ${limits.projects}`;
+  document.getElementById('accProjectsVal').textContent = `${state.projectsUsed}`;
 
   // Projects list
   await loadProjects();
@@ -931,169 +1153,20 @@ function openProjectModal(pid) {
 
 document.getElementById('accountLoginBtn')?.addEventListener('click', () => openModal('authOverlay'));
 
+
 /* ================================================================
-   CHECKOUT / PAYMENT
+   CHECKOUT / PAYMENT — removed (site is now free with donations)
 ================================================================ */
-function openCheckout(pkgKey) {
-  state.checkoutPkg    = pkgKey;
-  state.checkoutMethod = null;
+/* eslint-disable no-unused-vars */
+function openCheckout() { /* no-op — pricing is now free+donations */ }
+/* eslint-enable no-unused-vars */
 
-  document.getElementById('checkoutPkgName').textContent  = `باقة ${PACKAGES[pkgKey].name}`;
-  document.getElementById('checkoutPkgPrice').textContent = `$${PACKAGES[pkgKey].price}`;
 
-  // Reset steps
-  ['checkoutMethodStep','checkoutUploadStep','checkoutVerifyingStep',
-   'checkoutDoneStep','checkoutFailedStep'].forEach(id => {
-    document.getElementById(id).hidden = id !== 'checkoutMethodStep';
-  });
-
-  // Clear proofs
-  ['proofFile1','proofFile2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  ['proofDrop1Text','proofDrop2Text'].forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = i === 0 ? 'اضغط لرفع صورة رسالة الـ SMS' : 'اضغط لرفع صورة التطبيق';
-  });
-  ['proofPreview1','proofPreview2'].forEach(id => {
-    document.getElementById(id).hidden = true;
-  });
-  ['fileDrop1','fileDrop2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('has-file');
-  });
-
-  openModal('checkoutOverlay');
-}
-
-/* ─── Choose payment method ─── */
-document.querySelectorAll('.pay-method').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const method = btn.dataset.method;
-    state.checkoutMethod = method;
-    const info = PAYMENT_INFO[method];
-
-    // Show payment info box
-    const box = document.getElementById('payInfoBox');
-    box.innerHTML = `
-      <strong>${info.label}</strong>
-      <span>${info.detail}</span>
-      <p style="margin:6px 0 0;font-size:13px;color:var(--ink-soft)">
-        حوّل مبلغ <b>$${PACKAGES[state.checkoutPkg]?.price}</b> لهذا الحساب ثم ارفع صور التأكيد أدناه.
-      </p>`;
-
-    document.getElementById('checkoutMethodStep').hidden = true;
-    document.getElementById('checkoutUploadStep').hidden = false;
-  });
-});
-
-/* ─── Proof file drops ─── */
-setupProofDrop('proofDrop1', 'proofFile1', 'proofDrop1Text', 'proofPreview1', 'proofImg1');
-setupProofDrop('proofDrop2', 'proofFile2', 'proofDrop2Text', 'proofPreview2', 'proofImg2');
-
-function setupProofDrop(dropId, inputId, textId, previewId, imgId) {
-  const drop    = document.getElementById(dropId);
-  const input   = document.getElementById(inputId);
-  const textEl  = document.getElementById(textId);
-  const preview = document.getElementById(previewId);
-  const img     = document.getElementById(imgId);
-  if (!drop || !input) return;
-
-  drop.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => {
-    const f = input.files[0];
-    if (!f) return;
-    textEl.textContent = `✓ ${f.name}`;
-    drop.classList.add('has-file');
-    const url = URL.createObjectURL(f);
-    img.src = url;
-    preview.hidden = false;
-  });
-
-  // Remove button
-  preview?.querySelector('.proof-remove')?.addEventListener('click', () => {
-    input.value = '';
-    textEl.textContent = dropId === 'proofDrop1' ? 'اضغط لرفع صورة رسالة الـ SMS' : 'اضغط لرفع صورة التطبيق';
-    drop.classList.remove('has-file');
-    preview.hidden = true;
-    img.src = '';
-  });
-}
-
-/* ─── Submit proof & verify ─── */
-document.getElementById('submitProofBtn').addEventListener('click', async () => {
-  const f1 = document.getElementById('proofFile1').files[0];
-  const f2 = document.getElementById('proofFile2').files[0];
-
-  if (!f1 || !f2) {
-    showToast('من فضلك ارفع الصورتين', 'error');
-    return;
-  }
-
-  document.getElementById('checkoutUploadStep').hidden    = true;
-  document.getElementById('checkoutVerifyingStep').hidden = false;
-
-  try {
-    const [img1b64, img2b64] = await Promise.all([fileToBase64(f1), fileToBase64(f2)]);
-    const pkg = PACKAGES[state.checkoutPkg];
-
-    const result = await verifyPaymentProof({
-      smsImageBase64: img1b64,
-      appImageBase64: img2b64,
-      expectedAmount: pkg.price,
-      packageName:    pkg.name,
-    });
-
-    document.getElementById('checkoutVerifyingStep').hidden = true;
-
-    if (result.verified) {
-      // Activate package in Firestore
-      if (state.user) {
-        await updateDoc(doc(db, 'users', state.user.uid), {
-          package: state.checkoutPkg,
-          packageActivatedAt: serverTimestamp(),
-        });
-
-        // Upload proof images to Storage
-        try {
-          const timestamp = Date.now();
-          const r1 = ref(storage, `payments/${state.user.uid}/${timestamp}_sms.jpg`);
-          const r2 = ref(storage, `payments/${state.user.uid}/${timestamp}_app.jpg`);
-          await Promise.all([uploadBytes(r1, f1), uploadBytes(r2, f2)]);
-        } catch (e) { console.warn('Proof upload:', e); }
-
-        state.package = state.checkoutPkg;
-        const newLimits = PLAN_LIMITS[state.checkoutPkg];
-        state.projectsUsed  = Math.min(state.projectsUsed, newLimits.projects);
-        renderWorkspaceSide();
-        renderPricingHome();
-      }
-      document.getElementById('checkoutDoneStep').hidden = false;
-      showToast('🎉 تم تفعيل باقتك بنجاح!', 'success');
-    } else {
-      document.getElementById('checkoutFailReason').textContent =
-        result.reason || 'الصور غير مطابقة أو المبلغ غير صحيح.';
-      document.getElementById('checkoutFailedStep').hidden = false;
-    }
-  } catch (err) {
-    document.getElementById('checkoutVerifyingStep').hidden = true;
-    document.getElementById('checkoutFailReason').textContent =
-      'حدث خطأ أثناء التحقق: ' + err.message;
-    document.getElementById('checkoutFailedStep').hidden = false;
-    console.error(err);
-  }
-});
-
-/* ─── Retry proof ─── */
-document.getElementById('retryProofBtn')?.addEventListener('click', () => {
-  document.getElementById('checkoutFailedStep').hidden  = true;
-  document.getElementById('checkoutUploadStep').hidden  = false;
-});
 
 /* ================================================================
    UTILS
 ================================================================ */
+
 function escapeHTML(str) {
   if (!str) return '';
   return String(str).replace(/[&<>"']/g, c => ({
@@ -1241,142 +1314,110 @@ async function executePromptGeneration(descriptionText, isClarification = false)
   const submitBtn = document.getElementById('wsSubmitBtn');
   const loading   = document.getElementById('wsLoading');
   const result    = document.getElementById('wsResult');
+  const followupBox = document.getElementById('wsFollowupBox');
+  const inlineBox   = document.getElementById('clarificationInlineBox');
   
   result.hidden   = true;
   loading.hidden  = false;
   submitBtn.disabled = true;
-  document.getElementById('wsSubmitLabel').textContent = '⏳ جاري التحليل…';
+  document.getElementById('wsSubmitLabel').textContent = currentLang === 'ar' ? '⏳ جاري التحليل…' : '⏳ Analyzing...';
 
-  let imageBase64 = null;
-  if (!isClarification) {
-    // أول توليد: نقرأ الملف ونحفظه في الحالة
-    const wsFile = document.getElementById('wsFile').files[0];
-    const limits = PLAN_LIMITS[state.package];
-    if (wsFile && limits.fileUpload) {
-      try { imageBase64 = await fileToBase64(wsFile); }
-      catch { console.error('Failed to read file'); }
-    }
-    state.cachedImageBase64 = imageBase64;
-  } else {
-    // إعادة توليد بعد الأسئلة: نستخدم الصورة المحفوظة
-    imageBase64 = state.cachedImageBase64;
-  }
+  const streamBody = document.getElementById('streamingLiveBody');
+  const streamTerminal = document.getElementById('streamingLiveTerminal');
+  if (streamTerminal) streamTerminal.hidden = false;
+  if (streamBody) streamBody.textContent = "";
 
   try {
     const plan = await generatePromptPlan({
       type:        state.selectedType,
       description: descriptionText,
-      imageBase64,
+      imageBase64: null,
       planModel:   state.package,
       customModel: state.customModel,
+    }, (chunk, fullText) => {
+      if (streamBody) {
+        streamBody.textContent = fullText;
+        streamBody.scrollTop = streamBody.scrollHeight;
+      }
     });
+
+    if (streamTerminal) streamTerminal.hidden = true;
 
     if (plan.needsMoreDetails) {
       if (!isClarification) {
         originalPromptDescription = descriptionText;
       }
-      renderClarificationQuestions(plan.questions);
-      openModal('clarificationOverlay');
-      showToast('الرجاء توضيح بعض التفاصيل لمساعدتنا 🤖', 'info');
+      renderClarificationQuestionsInline(plan.questions);
+      if (inlineBox) inlineBox.style.display = 'block';
+      if (followupBox) followupBox.style.display = 'none';
+      showToast(currentLang === 'ar' ? 'الرجاء توضيح بعض التفاصيل لمساعدتنا 🤖' : 'Please clarify some details to help us 🤖', 'info');
     } else {
-      if (isClarification) {
-        closeModal('clarificationOverlay');
-      }
+      if (inlineBox) inlineBox.style.display = 'none';
       state.currentPlan = { type: state.selectedType, description: originalPromptDescription || descriptionText, plan };
       renderPlan(plan, originalPromptDescription || descriptionText);
       result.hidden = false;
-      showToast('تمت الخطة بنجاح! 🎉', 'success');
+      if (followupBox) followupBox.style.display = 'block';
+      showToast(currentLang === 'ar' ? 'تمت الخطة بنجاح! 🎉' : 'Plan generated successfully! 🎉', 'success');
       originalPromptDescription = "";
     }
   } catch (err) {
-    showToast(err.message || 'حدث خطأ. حاول مجدداً.', 'error');
+    if (streamTerminal) streamTerminal.hidden = true;
+    showToast(err.message || (currentLang === 'ar' ? 'حدث خطأ. حاول مجدداً.' : 'An error occurred. Try again.'), 'error');
     console.error(err);
   } finally {
     loading.hidden  = true;
     submitBtn.disabled = false;
-    document.getElementById('wsSubmitLabel').textContent = '🤖 جهّزلي الخطة';
+    document.getElementById('wsSubmitLabel').textContent = currentLang === 'ar' ? '🤖 جهّزلي الخطة' : '🤖 Prepare Plan';
   }
 }
 
-function renderClarificationQuestions(questions) {
-  const container = document.getElementById('clarificationQuestionsContainer');
+function renderClarificationQuestionsInline(questions) {
+  const container = document.getElementById('clarificationInlineContainer');
+  if (!container) return;
   container.innerHTML = '';
 
   questions.forEach((q, idx) => {
     const qBox = document.createElement('div');
+    qBox.style.marginBottom = '12px';
     qBox.className = 'clarification-question-box';
     qBox.dataset.id = q.id || `q-${idx}`;
     qBox.dataset.question = q.question;
 
-    const qText = document.createElement('p');
-    qText.className = 'clarification-question-text';
-    qText.textContent = q.question;
-    qBox.appendChild(qText);
+    const label = document.createElement('label');
+    label.className = 'field-label';
+    label.textContent = q.question;
+    label.style.marginTop = '0';
+    qBox.appendChild(label);
 
-    const optionsContainer = document.createElement('div');
-    optionsContainer.className = 'clarification-options';
+    const select = document.createElement('select');
+    select.className = 'field-select';
+    
+    const defOpt = document.createElement('option');
+    defOpt.value = '';
+    defOpt.textContent = currentLang === 'ar' ? '-- اختر خياراً --' : '-- Select Option --';
+    select.appendChild(defOpt);
 
     q.options.forEach(opt => {
-      const optBtn = document.createElement('button');
-      optBtn.type = 'button';
-      optBtn.className = 'clarification-option-btn';
-      optBtn.textContent = opt;
-      optBtn.addEventListener('click', () => {
-        const alreadyActive = optBtn.classList.contains('active');
-        optionsContainer.querySelectorAll('.clarification-option-btn').forEach(btn => btn.classList.remove('active'));
-        if (!alreadyActive) {
-          optBtn.classList.add('active');
-        }
-      });
-      optionsContainer.appendChild(optBtn);
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      select.appendChild(option);
     });
-
-    qBox.appendChild(optionsContainer);
+    
+    qBox.appendChild(select);
 
     const customInput = document.createElement('input');
     customInput.type = 'text';
     customInput.className = 'clarification-custom-input';
-    customInput.placeholder = 'أو اكتب إجابة مخصصة هنا...';
+    customInput.placeholder = currentLang === 'ar' ? 'أو اكتب إجابة مخصصة هنا...' : 'Or write custom answer here...';
+    customInput.style.marginTop = '8px';
     qBox.appendChild(customInput);
 
     container.appendChild(qBox);
   });
 }
 
-document.getElementById('submitClarificationBtn').addEventListener('click', async () => {
-  const container = document.getElementById('clarificationQuestionsContainer');
-  const questionBoxes = container.querySelectorAll('.clarification-question-box');
-  
-  const additionalDetails = [];
-  
-  questionBoxes.forEach(box => {
-    const qId = box.dataset.id;
-    const questionText = box.dataset.question;
-    const activeOptBtn = box.querySelector('.clarification-option-btn.active');
-    const customVal = box.querySelector('.clarification-custom-input').value.trim();
-    
-    let answer = "";
-    if (customVal) {
-      answer = customVal;
-    } else if (activeOptBtn) {
-      answer = activeOptBtn.textContent;
-    }
-    
-    if (answer) {
-      additionalDetails.push(`- ${questionText}: ${answer}`);
-    }
-  });
-
-  if (additionalDetails.length === 0) {
-    showToast('الرجاء اختيار إجابة أو كتابة توضيح واحد على الأقل', 'warning');
-    return;
-  }
-
-  const combinedDescription = `${originalPromptDescription}\n\n[معلومات إضافية للتوضيح]:\n${additionalDetails.join('\n')}`;
-  
-  closeModal('clarificationOverlay');
-  await executePromptGeneration(combinedDescription, true);
-});
+// Obsolete screen questions submit is handled on the inline button instead
 
 // ─── Model Select Population ──────────────────────────────
 function populateModelSelect() {
@@ -1397,8 +1438,73 @@ document.getElementById('wsModelSelect')?.addEventListener('change', (e) => {
   const selectedLabel = AVAILABLE_MODELS.find(m => m.id === state.customModel)?.label || state.customModel;
   const modelEl = document.getElementById('wsModelName');
   if (modelEl) modelEl.textContent = selectedLabel;
-  showToast(`تم تغيير الموديل النشط إلى: ${selectedLabel}`, 'info');
+  showToast(currentLang === 'ar' ? `تم تغيير الموديل النشط إلى: ${selectedLabel}` : `Active model changed to: ${selectedLabel}`, 'info');
 });
 
+// ─── Submit Inline Clarification Answers ───────────────────
+document.getElementById('submitClarificationInlineBtn')?.addEventListener('click', async () => {
+  const container = document.getElementById('clarificationInlineContainer');
+  if (!container) return;
+  const questionBoxes = container.querySelectorAll('.clarification-question-box');
+  
+  const additionalDetails = [];
+  
+  questionBoxes.forEach(box => {
+    const questionText = box.dataset.question;
+    const selectEl = box.querySelector('select');
+    const customVal = box.querySelector('.clarification-custom-input').value.trim();
+    
+    let answer = "";
+    if (customVal) {
+      answer = customVal;
+    } else if (selectEl && selectEl.value) {
+      answer = selectEl.value;
+    }
+    
+    if (answer) {
+      additionalDetails.push(`- ${questionText}: ${answer}`);
+    }
+  });
+
+  if (additionalDetails.length === 0) {
+    showToast(currentLang === 'ar' ? 'الرجاء اختيار إجابة أو كتابة توضيح واحد على الأقل' : 'Please select or type at least one answer', 'warning');
+    return;
+  }
+
+  const combinedDescription = `${originalPromptDescription}\n\n[معلومات إضافية للتوضيح]:\n${additionalDetails.join('\n')}`;
+  
+  document.getElementById('clarificationInlineBox').style.display = 'none';
+  await executePromptGeneration(combinedDescription, true);
+});
+
+// ─── Follow Up Submission ─────────────────────────────────
+document.getElementById('followupForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const followupDesc = document.getElementById('followupDescription').value.trim();
+  if (!followupDesc) return;
+
+  const previousPlanText = JSON.stringify(state.currentPlan?.plan || {});
+  const combinedPromptText = `لقد قمت بتوليد الخطة التالية سابقاً:\n${previousPlanText}\n\nوالآن يريد المستخدم استكمالها أو تعديلها بالطلب التالي:\n"${followupDesc}"\n\nأرجع خطة جديدة كاملة ومعدلة ومستكملة للبرومبت بالتنسيق المطلوب JSON.`;
+
+  document.getElementById('followupDescription').value = "";
+  document.getElementById('wsFollowupBox').style.display = 'none';
+
+  await executePromptGeneration(combinedPromptText, false);
+});
+
+// ─── Donation Copy Listeners ──────────────────────────────
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('copy-donation-btn')) {
+    const copyText = e.target.dataset.copy;
+    if (copyText) {
+      navigator.clipboard.writeText(copyText).then(() => {
+        showToast(currentLang === 'ar' ? 'تم نسخ تفاصيل التبرع! شكراً لدعمك ❤️' : 'Donation details copied! Thank you for your support ❤️', 'success');
+      }).catch(() => showToast('فشل النسخ', 'error'));
+    }
+  }
+});
+
+// ─── Initialize Lang & App ───────────────────────────────
+initLanguage();
 populateModelSelect();
 showView('home');
